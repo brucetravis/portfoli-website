@@ -1,0 +1,142 @@
+<canvas class="hero__particles" aria-hidden="true"></canvas>
+
+<script>
+    import { MONOGRAM_PATH, MONOGRAM_VIEWBOX as VB } from '../lib/monogram';
+
+    const canvas = document.querySelector('.hero__particles') as HTMLCanvasElement;
+    const hero = canvas.closest('.hero') as HTMLElement;
+
+    // Step 3: only run when the hero's inline script said "play"
+    if (hero.dataset.intro !== 'play') {
+        canvas.remove();
+    } else {
+        runIntro();
+    }
+
+    function runIntro() {
+        const ctx = canvas.getContext('2d')!;
+
+        const COLOR = '215, 200, 187';
+        const GAP = 3;
+        const DURATION = 2400;
+        const MAX_DELAY = 800;
+        const GLOW_TIME = 900;
+        const REVEAL_AT = DURATION + MAX_DELAY; // name starts rising when the glow starts
+
+        // 1. Size the canvas sharply for this screen
+        const dpr = window.devicePixelRatio || 1;
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        ctx.scale(dpr, dpr);
+
+        // 2. Work out where the BT sits (centred)
+        const markHeight = Math.min(height * 0.4, 300);
+        const scale = markHeight / VB.h;
+        const markWidth = VB.w * scale;
+        const offsetX = (width - markWidth) / 2;
+        const offsetY = (height - markHeight) / 2;
+
+        // 3. Draw the BT on a hidden canvas and read its pixels
+        const sampler = document.createElement('canvas').getContext('2d')!;
+        sampler.canvas.width = Math.ceil(markWidth);
+        sampler.canvas.height = Math.ceil(markHeight);
+        sampler.scale(scale, scale);
+        sampler.translate(-VB.x, -VB.y);
+        sampler.fill(new Path2D(MONOGRAM_PATH), 'evenodd');
+        const pixels = sampler.getImageData(0, 0, sampler.canvas.width, sampler.canvas.height).data;
+
+        // 4. One particle for every filled spot, starting at a random place
+        const particles: { tx: number; ty: number; sx: number; sy: number; delay: number }[] = [];
+        for (let y = 0; y < sampler.canvas.height; y += GAP) {
+        for (let x = 0; x < sampler.canvas.width; x += GAP) {
+            const alpha = pixels[(y * sampler.canvas.width + x) * 4 + 3];
+            if (alpha > 128) {
+            particles.push({
+                tx: offsetX + x,
+                ty: offsetY + y,
+                sx: Math.random() * width,
+                sy: Math.random() * height,
+                delay: Math.random() * MAX_DELAY,
+            });
+            }
+        }
+        }
+
+            // 5. Pre-draw the finished BT twice: plain, and glowing (done once, before animating)
+            const makeLayer = (glow: boolean) => {
+                const layer = document.createElement('canvas');
+                layer.width = width * dpr;
+                layer.height = height * dpr;
+                const l = layer.getContext('2d')!;
+                l.scale(dpr, dpr);
+                l.fillStyle = `rgb(${COLOR})`;
+                if (glow) {
+                    l.shadowBlur = 24;
+                    l.shadowColor = `rgba(${COLOR}, 0.8)`;
+                }
+                for (const p of particles) l.fillRect(p.tx, p.ty, 2, 2);
+                return layer;
+            };
+
+            const plainLayer = makeLayer(false);
+            const glowLayer = makeLayer(true);
+
+            // 6. Animate: fly in, glow once, reveal the name, then fade out
+            const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+            const TOTAL = DURATION + MAX_DELAY + GLOW_TIME;
+            let start: number | null = null;
+            let revealed = false;
+
+            function frame(now: number) {
+                if (start === null) start = now;
+                const elapsed = now - start;
+
+                ctx.clearRect(0, 0, width, height);
+
+                if (elapsed < REVEAL_AT) {
+                    // Flying in: draw each particle at its current position
+                    ctx.fillStyle = `rgb(${COLOR})`;
+                    for (const p of particles) {
+                    const t = Math.min(1, Math.max(0, (elapsed - p.delay) / DURATION));
+                    const e = easeOut(t);
+                    ctx.fillRect(p.sx + (p.tx - p.sx) * e, p.sy + (p.ty - p.sy) * e, 2, 2);
+                    }
+                } else {
+                    // Formed: just stamp the two pre-drawn layers (cheap)
+                    const glowT = Math.min(1, (elapsed - REVEAL_AT) / GLOW_TIME);
+                    ctx.drawImage(plainLayer, 0, 0, width, height);
+                    ctx.globalAlpha = Math.sin(glowT * Math.PI);
+                    ctx.drawImage(glowLayer, 0, 0, width, height);
+                    ctx.globalAlpha = 1;
+                }
+
+                // Start the name rising as the glow begins
+                if (!revealed && elapsed >= REVEAL_AT) {
+                    hero.classList.add('is-revealed');
+                    revealed = true;
+                }
+
+                if (elapsed < TOTAL) {
+                    requestAnimationFrame(frame);
+                } else {
+                    canvas.classList.add('is-done');
+                }
+            }
+
+        requestAnimationFrame(frame);
+    }
+</script>
+
+<style>
+    .hero__particles {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        transition: opacity 900ms;
+    }
+    .hero__particles.is-done { opacity: 0; }
+</style>

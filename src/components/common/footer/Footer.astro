@@ -1,12 +1,6 @@
 ---
 import Monogram from '../../Monogram.astro';
-
-const socials = [
-    { label: 'GitHub', short: 'GH', href: '#' },
-    { label: 'LinkedIn', short: 'IN', href: '#' },
-    { label: 'X', short: 'X', href: '#' },
-    { label: 'Email', short: '@', href: '#' },
-];
+import { SOCIALS } from '../../../lib/site';
 
 const year = new Date().getFullYear();
 ---
@@ -25,7 +19,7 @@ const year = new Date().getFullYear();
     <p class="footer__colophon">Built with Astro · 0 trackers</p>
 
     <ul class="footer__socials">
-        {socials.map((s) => (
+        {SOCIALS.map((s) => (
             <li><a href={s.href} aria-label={s.label}>{s.short}</a></li>
         ))}
     </ul>

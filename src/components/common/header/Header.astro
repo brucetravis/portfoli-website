@@ -1,18 +1,6 @@
 ---
 import Monogram from '../../Monogram.astro';
-
-const links = [
-    { label: 'Work', href: '/work' },
-    { label: 'Ideas', href: '/ideas' },
-    { label: 'About', href: '/about' },
-];
-
-const socials = [
-    { label: 'GitHub', short: 'GH', href: '#' },
-    { label: 'LinkedIn', short: 'IN', href: '#' },
-    { label: 'X', short: 'X', href: '#' },
-    { label: 'Email', short: '@', href: '#' },
-];
+import { NAV_LINKS, SOCIALS } from '../../../lib/site';
 
 const current = Astro.url.pathname;
 const isHome = current === '/';
@@ -25,7 +13,7 @@ const isHome = current === '/';
 
     <nav aria-label="Main">
         <ul class="nav">
-        {links.map((link) => (
+        {NAV_LINKS.map((link) => (
             <li>
             <a href={link.href} aria-current={current.startsWith(link.href) ? 'page' : undefined}>
                 <span aria-hidden="true">( </span>{link.label}<span aria-hidden="true"> )</span>
@@ -36,33 +24,75 @@ const isHome = current === '/';
     </nav>
 
     <ul class="socials">
-        {socials.map((s) => (
+        {SOCIALS.map((s) => (
         <li><a href={s.href} aria-label={s.label}>{s.short}</a></li>
         ))}
     </ul>
+
+    <button
+        class="menu-button"
+        type="button"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        data-menu-open
+    >
+        <span aria-hidden="true">( </span>Menu<span aria-hidden="true"> )</span>
+    </button>
 </header>
+
+<div
+    class="mobile-menu"
+    id="mobile-menu"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Menu"
+    hidden
+    data-menu
+>
+    <div class="mobile-menu__top">
+        <a class="logo" href="/" aria-label="Bruce Travis — home">
+        <Monogram size={32} />
+        </a>
+        <button class="menu-button" type="button" data-menu-close>
+        <span aria-hidden="true">( </span>Close<span aria-hidden="true"> )</span>
+        </button>
+    </div>
+
+    <nav aria-label="Main" class="mobile-menu__nav">
+        {NAV_LINKS.map((link) => (
+        <a href={link.href} aria-current={current.startsWith(link.href) ? 'page' : undefined}>{link.label}</a>
+        ))}
+    </nav>
+
+    <ul class="socials mobile-menu__socials">
+        {SOCIALS.map((s) => (
+        <li><a href={s.href} aria-label={s.label}>{s.short}</a></li>
+        ))}
+    </ul>
+</div>
 
 {!isHome && <div class="header-spacer" aria-hidden="true"></div>}
 
 <script>
-    const header = document.querySelector('[data-header]');
+    const header = document.querySelector('[data-header]') as HTMLElement;
+    const menu = document.querySelector('[data-menu]') as HTMLElement;
+    const openButton = document.querySelector('[data-menu-open]') as HTMLButtonElement;
+    const closeButton = document.querySelector('[data-menu-close]') as HTMLButtonElement;
+
+    /* ---------- Partially sticky header ---------- */
     const HEADER_HEIGHT = 72;
     const THRESHOLD = 8;
-
     let lastY = window.scrollY;
     let ticking = false;
 
     function update() {
         const y = window.scrollY;
-
         header.classList.toggle('is-scrolled', y > 10);
-
         if (Math.abs(y - lastY) > THRESHOLD) {
         const goingDown = y > lastY && y > HEADER_HEIGHT;
         header.classList.toggle('is-hidden', goingDown);
         lastY = y;
         }
-
         ticking = false;
     }
 
@@ -73,8 +103,54 @@ const isHome = current === '/';
         }
     }, { passive: true });
 
-    header.addEventListener('focusin', () => {
-        header.classList.remove('is-hidden');
+    header.addEventListener('focusin', () => header.classList.remove('is-hidden'));
+
+    /* ---------- Mobile menu ---------- */
+    function focusables() {
+        return Array.from(menu.querySelectorAll<HTMLElement>('a, button'));
+    }
+
+    function openMenu() {
+        menu.hidden = false;
+        requestAnimationFrame(() => menu.classList.add('is-open'));
+        openButton.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+        closeButton.focus();
+        document.addEventListener('keydown', onKeydown);
+    }
+
+    function closeMenu() {
+        menu.classList.remove('is-open');
+        openButton.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+        document.removeEventListener('keydown', onKeydown);
+        setTimeout(() => { menu.hidden = true; }, 300);
+        openButton.focus();
+    }
+
+    function onKeydown(event: KeyboardEvent) {
+        if (event.key === 'Escape') {
+        closeMenu();
+        return;
+        }
+        if (event.key === 'Tab') {
+        const items = focusables();
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+        }
+        }
+    }
+
+    openButton.addEventListener('click', openMenu);
+    closeButton.addEventListener('click', closeMenu);
+    menu.querySelectorAll('.mobile-menu__nav a').forEach((link) => {
+        link.addEventListener('click', closeMenu);
     });
 </script>
 
@@ -97,23 +173,16 @@ const isHome = current === '/';
         background 300ms,
         border-color 300ms;
     }
-
     .header.is-scrolled {
         background: var(--bg);
         border-bottom-color: var(--border);
     }
-
-    .header.is-hidden {
-        transform: translateY(-100%);
-    }
-
+    .header.is-hidden { transform: translateY(-100%); }
     .header-spacer { height: 72px; }
 
     /* Logo glow */
     .logo { display: block; }
-    .logo :global(.monogram) {
-        transition: filter 300ms cubic-bezier(0.2, 0, 0, 1);
-    }
+    .logo :global(.monogram) { transition: filter 300ms cubic-bezier(0.2, 0, 0, 1); }
     @media (hover: hover) {
         .logo:hover :global(.monogram) {
         filter: drop-shadow(0 0 8px var(--glow-near)) drop-shadow(0 0 30px var(--glow-far));
@@ -154,16 +223,77 @@ const isHome = current === '/';
     }
     .socials a:hover { border-color: var(--accent); color: var(--accent); }
 
-    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+    a:focus-visible,
+    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+    /* Menu button (phones only) */
+    .menu-button {
+        display: none;
+        min-height: 44px;
+        padding: 0;
+        background: none;
+        border: none;
+        color: var(--brand);
+        font: inherit;
+        font-size: 15px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    /* Full-screen mobile menu */
+    .mobile-menu {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        padding: 0 20px 40px;
+        opacity: 0;
+        transition: opacity 300ms cubic-bezier(0.2, 0, 0, 1);
+    }
+    .mobile-menu.is-open { opacity: 1; }
+    .mobile-menu[hidden] { display: none; }
+
+    .mobile-menu__top {
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .mobile-menu__top .menu-button { display: block; }
+
+    .mobile-menu__nav {
+        flex-grow: 1;
+        padding-top: 64px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .mobile-menu__nav a {
+        font-family: var(--font-display);
+        font-size: 56px;
+        line-height: 1.05;
+        color: var(--brand);
+        text-decoration: none;
+        transform: translateY(8px);
+        transition: transform 300ms cubic-bezier(0.2, 0, 0, 1), color 150ms;
+    }
+    .mobile-menu.is-open .mobile-menu__nav a { transform: translateY(0); }
+    .mobile-menu__nav a[aria-current='page'],
+    .mobile-menu__nav a:hover { color: var(--accent); }
 
     @media (prefers-reduced-motion: reduce) {
-        .header { transition: none; }
+        .header,
+        .mobile-menu,
+        .mobile-menu__nav a { transition: none; }
     }
 
     @media (max-width: 767px) {
         .header { height: 60px; }
         .header-spacer { height: 60px; }
-        nav,
-        .socials { display: none; }
+        .header nav,
+        .header .socials { display: none; }
+        .header .menu-button { display: block; }
     }
 </style>
