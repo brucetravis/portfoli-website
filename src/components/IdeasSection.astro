@@ -1,0 +1,106 @@
+---
+const ideas = [
+    { type: 'Essay', time: '[N] min', date: '[Month Year]', title: '[Essay title]', excerpt: '[One-line excerpt.]', href: '#' },
+    { type: 'Note', time: '[N] min', date: '[Month Year]', title: '[Note title]', excerpt: '[One-line excerpt.]', href: '#' },
+    { type: 'Essay', time: '[N] min', date: '[Month Year]', title: '[Essay title]', excerpt: '[One-line excerpt.]', href: '#' },
+];
+---
+
+<section class="ideas" aria-labelledby="ideas-title">
+    <div class="ideas__head">
+        <h2 id="ideas-title">Ideas</h2>
+        <a class="link" href="/ideas">See all <span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+
+    <ul class="ideas__list">
+        {ideas.map((i) => (
+        <li class="idea">
+            <p class="idea__meta">{i.type} · {i.time} · {i.date}</p>
+            <h3 class="idea__title"><a href={i.href}>{i.title}</a></h3>
+            <p class="idea__excerpt">{i.excerpt}</p>
+        </li>
+        ))}
+    </ul>
+</section>
+
+<style>
+    .ideas {
+        padding: clamp(64px, 10vw, 144px) clamp(16px, 4vw, 64px);
+        display: flex;
+        flex-direction: column;
+        gap: 48px;
+    }
+    .ideas__head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+    }
+    .ideas__head h2 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: clamp(40px, 5vw, 72px);
+        line-height: 1;
+        color: var(--brand);
+    }
+
+    .ideas__list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
+    }
+
+    .idea {
+        position: relative;
+        border-top: 1px solid var(--border);
+        padding-top: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        transition: border-color 150ms;
+    }
+    .idea:hover { border-color: var(--accent); }
+
+    .idea__meta {
+        margin: 0;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+    .idea__title {
+        margin: 0;
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: clamp(28px, 2.5vw, 36px);
+        line-height: 1.1;
+    }
+    .idea__title a {
+        color: var(--text);
+        text-decoration: none;
+        transition: color 150ms;
+    }
+    .idea__title a::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+    }
+    .idea:hover .idea__title a { color: var(--accent); }
+    .idea__title a:focus-visible { outline: none; }
+    .idea:focus-within { outline: 2px solid var(--accent); outline-offset: 6px; }
+
+    .idea__excerpt {
+        margin: 0;
+        font-size: 17px;
+        line-height: 1.5;
+        color: var(--muted);
+    }
+
+    @media (max-width: 767px) {
+        .ideas__list { grid-template-columns: 1fr; gap: 28px; }
+    }
+</style>

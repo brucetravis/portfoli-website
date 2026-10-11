@@ -26,3 +26,20 @@ h1 {
     font-family: var(--font-display);
     font-weight: 400;
 }
+
+.link {
+    color: var(--brand);
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 150ms;
+}
+.arrow {
+    display: inline-block;
+    transition: transform 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+.link:hover,
+.link:focus-visible { color: var(--accent); }
+.link:hover .arrow,
+.link:focus-visible .arrow { transform: translateX(4px); }
+.link:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }

@@ -1,7 +1,17 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import WorkSection from '../components/WorkSection.astro';
+import IdeasSection from '../components/IdeasSection.astro';
+import NotesSection from '../components/NotesSection.astro';
 ---
 
 <BaseLayout title="Bruce Travis">
-  <h1>Bruce Travis</h1>
+	<Hero
+		descriptor="[Descriptor]"
+		line="[Hero line — pending]"
+	/>
+	<WorkSection />
+	<IdeasSection />
+	<NotesSection />
 </BaseLayout>

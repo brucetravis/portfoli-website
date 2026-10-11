@@ -1,0 +1,90 @@
+---
+const { descriptor, line } = Astro.props;
+---
+
+<section class="hero" aria-labelledby="hero-name">
+    <div class="hero__photo" aria-hidden="true">
+        <span>PORTRAIT · coming after the shoot</span>
+    </div>
+
+    <div class="hero__text">
+        <p class="hero__descriptor">{descriptor}</p>
+        <h1 id="hero-name" class="hero__name">Bruce Travis</h1>
+        <p class="hero__line">{line}</p>
+    </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 clamp(16px, 4vw, 64px) 88px;
+    box-sizing: border-box;
+  }
+
+  .hero__photo {
+    position: absolute;
+    inset: 0;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 120px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .hero__text {
+    position: relative;
+    max-width: 760px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .hero__descriptor {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .hero__name {
+    margin: 0;
+    font-size: clamp(56px, 10vw, 144px);
+    line-height: 0.92;
+    letter-spacing: -0.02em;
+    color: var(--brand);
+  }
+
+  .hero__line {
+    margin: 0;
+    max-width: 620px;
+    font-size: clamp(18px, 1.6vw, 21px);
+    line-height: 1.55;
+  }
+
+  @media (max-width: 767px) {
+    .hero {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 0;
+      min-height: auto;
+    }
+    .hero__photo {
+      position: relative;
+      aspect-ratio: 4 / 5;
+      padding: 0;
+      justify-content: center;
+    }
+    .hero__text {
+      padding: 28px 20px 64px;
+    }
+  }
+</style>
