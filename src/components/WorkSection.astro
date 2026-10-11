@@ -1,0 +1,130 @@
+---
+const projects = [
+    { title: '[Project title]', meta: '[Year] · [Stack] · [Status]', cover: 'PLACE', href: '#' },
+    { title: '[Project title]', meta: '[Year] · [Stack] · [Status]', cover: 'ARTIFACT', href: '#' },
+    { title: '[Project title]', meta: '[Year] · [Stack] · [Status]', cover: 'INTERFACE', href: '#' },
+];
+---
+
+<section class="work" aria-labelledby="work-title">
+    <div class="work__head">
+        <h2 id="work-title">Work</h2>
+        <a class="link" href="/work">See all <span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+
+    <ul class="work__list">
+        {projects.map((p) => (
+        <li class="card">
+            <div class="card__cover" aria-hidden="true">COVER · {p.cover}</div>
+            <p class="card__meta">{p.meta}</p>
+            <h3 class="card__title">
+            <a href={p.href}>{p.title}</a>
+            </h3>
+            <span class="link card__cta" aria-hidden="true">Read the build <span class="arrow">→</span></span>
+        </li>
+        ))}
+    </ul>
+</section>
+
+<style>
+    .work {
+        padding: clamp(64px, 10vw, 144px) clamp(16px, 4vw, 64px);
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+    }
+
+    .work__head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+    }
+    .work__head h2 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: clamp(40px, 5vw, 72px);
+        line-height: 1;
+        color: var(--brand);
+    }
+
+    .work__head .link:hover,
+    .work__head .link:focus-visible,
+    .card:hover .card__cta {
+        color: var(--accent);
+    }
+    .work__head .link:hover .arrow,
+    .work__head .link:focus-visible .arrow,
+    .card:hover .card__cta .arrow {
+        transform: translateX(4px);
+    }
+
+    .work__list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
+    }
+
+    .card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .card__cover {
+        aspect-ratio: 4 / 5;
+        background: var(--surface);
+        border: 1px dashed var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--muted);
+    }
+    .card__meta {
+        margin: 0;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--muted);
+    }
+    .card__title {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 500;
+    }
+    .card__title a {
+        color: var(--text);
+        text-decoration: none;
+        transition: color 150ms;
+    }
+    .card__title a::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+    }
+    .card:hover .card__title a { color: var(--accent); }
+
+    .work__head .link:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+    .card__title a:focus-visible { outline: none; }
+    .card:focus-within { outline: 2px solid var(--accent); outline-offset: 6px; }
+
+    @media (max-width: 767px) {
+        .work { padding-right: 0; }
+        .work__head { padding-right: 16px; }
+        .work__list {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            gap: 16px;
+            padding-right: 16px;
+        }
+        .card {
+            flex: 0 0 78%;
+            scroll-snap-align: start;
+        }
+    }
+</style>
