@@ -113,18 +113,12 @@ const projects = [
     .card:focus-within { outline: 2px solid var(--accent); outline-offset: 6px; }
 
     @media (max-width: 767px) {
-        .work { padding-right: 0; }
-        .work__head { padding-right: 16px; }
         .work__list {
-            display: flex;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            gap: 16px;
-            padding-right: 16px;
+            grid-template-columns: 1fr;
+            gap: 40px;
         }
-        .card {
-            flex: 0 0 78%;
-            scroll-snap-align: start;
+        .card__cover {
+            aspect-ratio: 4 / 3;
         }
     }
 </style>
