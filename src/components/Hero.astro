@@ -1,17 +1,55 @@
 ---
+import HeroParticles from './HeroParticles.astro';
+import { Image } from 'astro:assets';
+import heroReference from '../assets/images/hero-reference.jpg';
 const { descriptor, line } = Astro.props;
+const name = 'Bruce Travis';
+const letters = name.split('');
 ---
 
 <section class="hero" aria-labelledby="hero-name">
-    <div class="hero__photo" aria-hidden="true">
-        <span>PORTRAIT · coming after the shoot</span>
-    </div>
+  <script is:inline define:vars={{ isDev: import.meta.env.DEV }}>
+    (function () {
+      var hero = document.currentScript.parentElement;
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var played = false;
+      try { played = !isDev && sessionStorage.getItem('bt-intro') === '1'; } catch (e) {}
+      if (!reduce && !played) {
+        hero.setAttribute('data-intro', 'play');
+        try { sessionStorage.setItem('bt-intro', '1'); } catch (e) {}
+        setTimeout(function () { hero.classList.add('is-revealed'); }, 6000);
+      }
+    })();
+  </script>
 
-    <div class="hero__text">
-        <p class="hero__descriptor">{descriptor}</p>
-        <h1 id="hero-name" class="hero__name">Bruce Travis</h1>
-        <p class="hero__line">{line}</p>
-    </div>
+  {/*<div class="hero__photo" aria-hidden="true">
+    <span>PORTRAIT · coming after the shoot</span>
+  </div> */}
+
+  <div class="hero__photo">
+    <Image
+      class="hero__img"
+      src={heroReference}
+      alt=""
+      widths={[640, 1024, 1600]}
+      sizes="100vw"
+      loading="eager"
+      fetchpriority="high"
+    />
+    <span class="hero__ref">Reference photo · not Bruce</span>
+  </div>
+
+  <HeroParticles />
+
+  <div class="hero__text">
+    <p class="hero__descriptor">{descriptor}</p>
+    <h1 id="hero-name" class="hero__name" aria-label={name}>
+      {letters.map((letter, i) => (
+        <span class="hero__letter" style={`--i: ${i}`} aria-hidden="true">{letter === ' ' ? '\u00A0' : letter}</span>
+      ))}
+    </h1>
+    <p class="hero__line">{line}</p>
+  </div>
 </section>
 
 <style>
@@ -27,15 +65,33 @@ const { descriptor, line } = Astro.props;
   .hero__photo {
     position: absolute;
     inset: 0;
+    overflow: hidden;
     background: var(--surface);
-    border: 1px dashed var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding-right: 120px;
+  }
+  .hero__photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgb(8 8 8 / 0.85) 0%, rgb(8 8 8 / 0) 55%);
+  }
+  .hero__ref {
+    position: absolute;
+    top: 88px;
+    right: clamp(16px, 4vw, 64px);
+    z-index: 1;
     font-family: var(--font-mono);
-    font-size: 13px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--muted);
+  }
+
+  .hero__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 70% center;
+    display: block;
   }
 
   .hero__text {
@@ -63,11 +119,39 @@ const { descriptor, line } = Astro.props;
     color: var(--brand);
   }
 
+  .hero__letter { display: inline-block; }
+
   .hero__line {
     margin: 0;
     max-width: 620px;
     font-size: clamp(18px, 1.6vw, 21px);
     line-height: 1.55;
+  }
+
+  /* Intro: hidden start (only when the intro plays) */
+  .hero[data-intro='play'] .hero__descriptor,
+  .hero[data-intro='play'] .hero__line,
+  .hero[data-intro='play'] .hero__letter {
+    opacity: 0;
+    transform: translateY(0.4em);
+    will-change: transform, opacity;
+  }
+
+  /* Intro: revealed */
+  .hero[data-intro='play'].is-revealed .hero__descriptor,
+  .hero[data-intro='play'].is-revealed .hero__line,
+  .hero[data-intro='play'].is-revealed .hero__letter {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 900ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .hero[data-intro='play'].is-revealed .hero__letter {
+    transition-delay: calc(var(--i) * 45ms);
+  }
+  .hero[data-intro='play'].is-revealed .hero__line {
+    transition-delay: 700ms;
   }
 
   @media (max-width: 767px) {
@@ -83,8 +167,6 @@ const { descriptor, line } = Astro.props;
       padding: 0;
       justify-content: center;
     }
-    .hero__text {
-      padding: 28px 20px 64px;
-    }
+    .hero__text { padding: 28px 20px 64px; }
   }
 </style>
