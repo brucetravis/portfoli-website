@@ -1,0 +1,169 @@
+---
+import Monogram from '../../Monogram.astro';
+
+const links = [
+    { label: 'Work', href: '/work' },
+    { label: 'Ideas', href: '/ideas' },
+    { label: 'About', href: '/about' },
+];
+
+const socials = [
+    { label: 'GitHub', short: 'GH', href: '#' },
+    { label: 'LinkedIn', short: 'IN', href: '#' },
+    { label: 'X', short: 'X', href: '#' },
+    { label: 'Email', short: '@', href: '#' },
+];
+
+const current = Astro.url.pathname;
+const isHome = current === '/';
+---
+
+<header class="header" data-header>
+    <a class="logo" href="/" aria-label="Bruce Travis — home">
+        <Monogram size={40} />
+    </a>
+
+    <nav aria-label="Main">
+        <ul class="nav">
+        {links.map((link) => (
+            <li>
+            <a href={link.href} aria-current={current.startsWith(link.href) ? 'page' : undefined}>
+                <span aria-hidden="true">( </span>{link.label}<span aria-hidden="true"> )</span>
+            </a>
+            </li>
+        ))}
+        </ul>
+    </nav>
+
+    <ul class="socials">
+        {socials.map((s) => (
+        <li><a href={s.href} aria-label={s.label}>{s.short}</a></li>
+        ))}
+    </ul>
+</header>
+
+{!isHome && <div class="header-spacer" aria-hidden="true"></div>}
+
+<script>
+    const header = document.querySelector('[data-header]');
+    const HEADER_HEIGHT = 72;
+    const THRESHOLD = 8;
+
+    let lastY = window.scrollY;
+    let ticking = false;
+
+    function update() {
+        const y = window.scrollY;
+
+        header.classList.toggle('is-scrolled', y > 10);
+
+        if (Math.abs(y - lastY) > THRESHOLD) {
+        const goingDown = y > lastY && y > HEADER_HEIGHT;
+        header.classList.toggle('is-hidden', goingDown);
+        lastY = y;
+        }
+
+        ticking = false;
+    }
+
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+        requestAnimationFrame(update);
+        ticking = true;
+        }
+    }, { passive: true });
+
+    header.addEventListener('focusin', () => {
+        header.classList.remove('is-hidden');
+    });
+</script>
+
+<style>
+    .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 10;
+        height: 72px;
+        padding: 0 clamp(16px, 4vw, 64px);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: transparent;
+        border-bottom: 1px solid transparent;
+        transition:
+        transform 350ms cubic-bezier(0.2, 0, 0, 1),
+        background 300ms,
+        border-color 300ms;
+    }
+
+    .header.is-scrolled {
+        background: var(--bg);
+        border-bottom-color: var(--border);
+    }
+
+    .header.is-hidden {
+        transform: translateY(-100%);
+    }
+
+    .header-spacer { height: 72px; }
+
+    /* Logo glow */
+    .logo { display: block; }
+    .logo :global(.monogram) {
+        transition: filter 300ms cubic-bezier(0.2, 0, 0, 1);
+    }
+    @media (hover: hover) {
+        .logo:hover :global(.monogram) {
+        filter: drop-shadow(0 0 8px var(--glow-near)) drop-shadow(0 0 30px var(--glow-far));
+        }
+    }
+    .logo:focus-visible :global(.monogram) {
+        filter: drop-shadow(0 0 8px var(--glow-near)) drop-shadow(0 0 30px var(--glow-far));
+    }
+
+    ul { list-style: none; margin: 0; padding: 0; display: flex; }
+
+    .nav { gap: 36px; }
+    .nav a {
+        color: var(--brand);
+        text-decoration: none;
+        font-size: 15px;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        transition: color 150ms;
+    }
+    .nav a:hover,
+    .nav a[aria-current='page'] { color: var(--accent); }
+
+    .socials { gap: 12px; }
+    .socials a {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border);
+        border-radius: 50%;
+        color: var(--brand);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        text-decoration: none;
+        transition: color 150ms, border-color 150ms;
+    }
+    .socials a:hover { border-color: var(--accent); color: var(--accent); }
+
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+    @media (prefers-reduced-motion: reduce) {
+        .header { transition: none; }
+    }
+
+    @media (max-width: 767px) {
+        .header { height: 60px; }
+        .header-spacer { height: 60px; }
+        nav,
+        .socials { display: none; }
+    }
+</style>

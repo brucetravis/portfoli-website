@@ -7,8 +7,8 @@
     --accent: #C8814F;
     --border: #2A2826;
     --border-strong: #67625C;
-    --glow-near: rgb(215 200 187 / 0.55);
-    --glow-far: rgb(215 200 187 / 0.25);
+    --glow-near: rgb(215 200 187 / 0.75);
+    --glow-far: rgb(215 200 187 / 0.4);
 
     --font-display: 'Instrument Serif', Georgia, serif;
     --font-body: 'Hanken Grotesk', system-ui, sans-serif;
