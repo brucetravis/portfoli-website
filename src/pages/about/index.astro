@@ -1,0 +1,266 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { SOCIALS } from '../../lib/site';
+import portrait from '../../assets/images/hero-reference.jpg';
+import { opener, sections } from './data/about.data';
+import { now, nowUpdated } from './data/now.data';
+
+// ---- Content: edit these, not the HTML below ----
+
+
+const email = 'bruceambundo@gmail.com';
+const speaking = "[One line: topics you're working on, invite me to talk about them.]";
+const elsewhere = SOCIALS.filter((s) => s.label !== 'Email');
+// --------------------------------------------------
+---
+
+<BaseLayout title="About — Bruce Travis">
+    <div class="about">
+        <aside class="about__aside">
+            <figure class="portrait">
+                <Image
+                    class="portrait__img"
+                    src={portrait}
+                    alt="Portrait of Bruce Travis"
+                    widths={[480, 800, 1200]}
+                    sizes="(max-width: 1023px) 100vw, 40vw"
+                    loading="eager"
+                />
+                <figcaption class="portrait__caption">Nairobi, Kenya</figcaption>
+            </figure>
+        </aside>
+
+        <article class="about__body">
+        <header class="about__intro">
+            <p class="eyebrow">About</p>
+            <h1 class="about__opener">{opener}</h1>
+        </header>
+
+        {sections.map((s) => (
+            <section class="block">
+                <h2 class="eyebrow">{s.label}</h2>
+                <p class="block__text">{s.text}</p>
+            </section>
+        ))}
+
+        <section class="now" aria-labelledby="now-title">
+            <div class="now__head">
+                <h2 id="now-title" class="now__title">Now</h2>
+                <!-- <span class="eyebrow">Updated {nowUpdated}</span> -->
+                {nowUpdated && <span class="eyebrow">Updated {nowUpdated}</span>}
+            </div>
+            <ul class="now__list">
+                {now.map((item) => (
+                    <li class="now__item">
+                    <span class="eyebrow now__label">{item.label}</span>
+                    <span>{item.text}</span>
+                    </li>
+                ))}
+            </ul>
+        </section>
+
+        <section class="contact" aria-labelledby="contact-title">
+            <h2 id="contact-title" class="eyebrow">Get in touch</h2>
+            <a class="contact__email" href={`mailto:${email}`}>
+                {email} <span class="arrow" aria-hidden="true">→</span>
+            </a>
+            <ul class="contact__list">
+                <li>
+                    <span class="contact__key">Client work —</span>{' '}
+                    <a class="link" href="https://neurorainnovations.com" target="_blank" rel="noopener">
+                        through Neurora Innovations ↗
+                    </a>
+                </li>
+                <li>
+                    <span class="contact__key">Speaking —</span>{' '}
+                    {speaking}
+                </li>
+                <li>
+                    <span class="contact__key">Elsewhere —</span>{' '}
+                    {elsewhere.map((s, i) => (
+                    <>
+                        {i > 0 && ' · '}
+                        <a class="link" href={s.href} target="_blank" rel="noopener">{s.label}</a>
+                    </>
+                    ))}
+                </li>
+            </ul>
+        </section>
+        </article>
+    </div>
+</BaseLayout>
+
+<style>
+    .about {
+        padding: clamp(32px, 6vw, 96px) clamp(16px, 4vw, 64px) clamp(64px, 10vw, 144px);
+        display: grid;
+        grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+        gap: clamp(48px, 8vw, 120px);
+        align-items: start;
+    }
+
+    /* Portrait stays in place while the text scrolls */
+    .about__aside {
+        position: sticky;
+        top: 120px;
+    }
+
+    .portrait {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .portrait :global(.portrait__img) {
+        display: block;
+        width: 100%;
+        aspect-ratio: 4 / 5;
+        height: auto;
+        object-fit: cover;
+        object-position: 70% center;
+        border: 1px solid var(--border);
+    }
+
+    .eyebrow,
+    .portrait__caption {
+        margin: 0;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        font-weight: 400;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .about__body {
+        display: flex;
+        flex-direction: column;
+        gap: clamp(48px, 6vw, 72px);
+        max-width: 680px;
+    }
+
+    .about__intro {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .about__opener {
+        margin: 0;
+        font-size: clamp(36px, 4.5vw, 60px);
+        line-height: 1.08;
+        letter-spacing: -0.01em;
+        color: var(--brand);
+    }
+
+    .block {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .block__text {
+        margin: 0;
+        font-size: clamp(18px, 1.6vw, 20px);
+        line-height: 1.7;
+    }
+
+    /* Now */
+    .now {
+        padding: 32px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .now__head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .now__title {
+        margin: 0;
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: 36px;
+        color: var(--brand);
+    }
+
+    .now__list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .now__item {
+        display: grid;
+        grid-template-columns: 110px 1fr;
+        gap: 16px;
+        padding: 14px 0;
+        border-top: 1px solid var(--border);
+        font-size: 17px;
+    }
+
+    .now__label {
+        color: var(--accent);
+        padding-top: 3px;
+    }
+
+    /* Contact */
+    .contact {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .contact__email {
+        font-family: var(--font-display);
+        font-size: clamp(32px, 4vw, 52px);
+        line-height: 1.1;
+        color: var(--brand);
+        text-decoration: none;
+        transition: color 300ms ease;
+    }
+
+    .contact__email .arrow {
+        display: inline-block;
+        transition: transform 300ms ease;
+    }
+
+    .contact__email:hover { color: var(--accent); }
+    .contact__email:hover .arrow { transform: translateX(6px); }
+
+    .contact__list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        font-size: 16px;
+        line-height: 1.6;
+    }
+
+    .contact__key { color: var(--muted); }
+
+    /* Tablet and phone: portrait on top, no sticky */
+    @media (max-width: 1023px) {
+        .about { grid-template-columns: 1fr; }
+        .about__aside { position: static; max-width: 480px; }
+    }
+
+    @media (max-width: 639px) {
+        .now { padding: 20px; }
+        .now__item { grid-template-columns: 1fr; gap: 4px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .contact__email:hover .arrow { transform: none; }
+    }
+</style>
