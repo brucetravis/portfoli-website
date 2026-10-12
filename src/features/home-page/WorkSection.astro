@@ -1,0 +1,124 @@
+---
+import { getCollection } from 'astro:content';
+import ProjectCover from '../project-page/ProjectCover.astro';
+
+const projects = (await getCollection('work', ({ data }) => !data.draft))
+  .sort((a, b) => a.data.order - b.data.order)
+  .slice(0, 3);
+---
+
+<section class="work" aria-labelledby="work-title">
+    <div class="work__head">
+        <h2 id="work-title">Work</h2>
+        <a class="link" href="/work">See all <span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+
+    <ul class="work__list">
+        {projects.map((p) => (
+        <li class="card">
+            <ProjectCover title={p.data.title} label={p.data.label} as="h3" />
+            <p class="card__meta">{p.data.year} · {p.data.role}</p>
+            <a class="link card__cta" href={`/work/${p.id}`} aria-label={`Read the build: ${p.data.title}`}>
+            Read the build <span class="arrow" aria-hidden="true">→</span>
+            </a>
+        </li>
+        ))}
+    </ul>
+</section>
+
+<style>
+    .work {
+        padding: clamp(64px, 10vw, 144px) clamp(16px, 4vw, 64px);
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+    }
+
+    .work__head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+    }
+
+    .work__head h2 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: clamp(40px, 5vw, 72px);
+        line-height: 1;
+        color: var(--brand);
+    }
+
+    .work__list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
+    }
+
+    .card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .card__meta {
+        margin: 6px 0 0;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    /* Whole card is clickable */
+    .card__cta::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+    }
+
+    /* Hover: border lightens, title glows, arrow nudges */
+    .card:hover :global(.cover) {
+        border-color: var(--border-strong);
+    }
+
+    .card:hover :global(.cover__title) {
+        text-shadow: 0 0 24px rgb(215 200 187 / 0.45);
+    }
+
+    .card:hover .card__cta {
+        color: var(--accent);
+    }
+
+    .card:hover .card__cta .arrow {
+        transform: translateX(4px);
+    }
+
+    .card:focus-within {
+        outline: 1px solid var(--accent);
+        outline-offset: 8px;
+    }
+
+    .card__cta:focus-visible {
+        outline: none;
+    }
+
+    @media (max-width: 767px) {
+        .work__list {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        }
+
+        .card :global(.cover) {
+        aspect-ratio: 4 / 3;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .card:hover .card__cta .arrow {
+        transform: none;
+        }
+    }
+</style>
