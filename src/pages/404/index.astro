@@ -1,0 +1,356 @@
+---
+import Monogram from "../../features/home-page/components/Monogram.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+
+
+const line = "The link is wrong, or the page moved. Try one of these instead:";
+---
+
+<BaseLayout title="Page not found — Bruce Travis">
+    <section class="lost">
+        <div class="stage" aria-hidden="true">
+            <canvas class="stage__canvas"></canvas>
+            <!-- Shown if 3D can't run (no WebGL, or reduced motion) -->
+            <div class="stage__fallback"><Monogram size={260} /></div>
+        </div>
+
+        <div class="lost__text">
+            <p class="lost__code">Error 404</p>
+            <h1 class="lost__title">This page broke.</h1>
+            <p class="lost__line">{line}</p>
+            <nav class="lost__links" aria-label="Helpful links">
+                <a class="link" href="/">Home <span class="arrow" aria-hidden="true">→</span></a>
+                <a class="link" href="/work">Work <span class="arrow" aria-hidden="true">→</span></a>
+                <a class="link" href="/ideas">Ideas <span class="arrow" aria-hidden="true">→</span></a>
+            </nav>
+            <p class="lost__hint" hidden>Psst — drag the pieces. Tap to break it again.</p>
+        </div>
+    </section>
+</BaseLayout>
+
+<style>
+  .lost {
+    position: relative;
+    min-height: calc(100dvh - 72px);
+    overflow: hidden;
+  }
+
+  /* The 3D scene fills the section, behind the text */
+  .stage {
+    position: absolute;
+    inset: 0;
+  }
+
+  .stage__canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    touch-action: none;
+  }
+
+  .stage__canvas:active { cursor: grabbing; }
+
+  .stage__fallback {
+    position: absolute;
+    top: 50%;
+    right: 12%;
+    transform: translateY(-50%);
+    display: none;
+  }
+
+  .stage__fallback :global(.monogram) {
+    filter: drop-shadow(0 0 8px rgb(215 200 187 / 0.75)) drop-shadow(0 0 30px rgb(215 200 187 / 0.4));
+  }
+
+  /* No 3D: hide the canvas, show the still logo */
+  .lost.is-static .stage__canvas { display: none; }
+  .lost.is-static .stage__fallback { display: block; }
+
+  .lost__text {
+    position: absolute;
+    left: 64px;
+    bottom: 96px;
+    width: min(620px, calc(100% - 128px));
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    pointer-events: none; /* drags pass through to the 3D scene... */
+  }
+
+  .lost__text a { pointer-events: auto; } /* ...but links still work */
+
+  .lost__code,
+  .lost__hint {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .lost__code { color: var(--accent); }
+
+  .lost__title {
+    margin: 0;
+    font-size: 104px;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    color: var(--brand);
+  }
+
+  .lost__line {
+    margin: 0;
+    font-size: 21px;
+    line-height: 1.55;
+  }
+
+  .lost__links {
+    display: flex;
+    gap: 28px;
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .lost__hint {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* Phone: scene on top, text below */
+  @media (max-width: 767px) {
+    .lost { min-height: auto; display: flex; flex-direction: column; }
+
+    .stage {
+      position: relative;
+      inset: auto;
+      height: 340px;
+    }
+
+    .stage__fallback { right: 50%; transform: translate(50%, -50%); }
+    .stage__fallback :global(.monogram) { width: 180px; height: auto; }
+
+    .lost__text {
+      position: static;
+      width: auto;
+      padding: 24px 20px 48px;
+      gap: 18px;
+    }
+
+    .lost__code { font-size: 12px; }
+    .lost__title { font-size: 60px; }
+    .lost__line { font-size: 17px; }
+
+    .lost__links { flex-direction: column; gap: 0; border-top: 1px solid var(--border); }
+
+    .lost__links a {
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+  }
+</style>
+
+<script>
+  import * as THREE from 'three';
+  import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
+  import { MONOGRAM_PATH, MONOGRAM_VIEWBOX } from '../../lib/monogram';
+
+  const section = document.querySelector<HTMLElement>('.lost')!;
+  const canvas = document.querySelector<HTMLCanvasElement>('.stage__canvas')!;
+  const stage = document.querySelector<HTMLElement>('.stage')!;
+  const hint = document.querySelector<HTMLElement>('.lost__hint')!;
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function webglWorks() {
+    try {
+      return !!document.createElement('canvas').getContext('webgl2');
+    } catch {
+      return false;
+    }
+  }
+
+  if (reducedMotion || !webglWorks()) {
+    section.classList.add('is-static');
+  } else {
+    start();
+  }
+
+  function start() {
+    hint.hidden = false;
+    const isPhone = window.matchMedia('(max-width: 767px)').matches;
+
+    // ---------- Scene, camera, renderer ----------
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(35, 1, 1, 5000);
+    camera.position.set(0, 0, 900);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+    const key = new THREE.DirectionalLight(0xffffff, 1.6);
+    key.position.set(300, 400, 600);
+    scene.add(key);
+    const rim = new THREE.DirectionalLight(0xc8814f, 1.4); // copper edge light
+    rim.position.set(-500, -200, -300);
+    scene.add(rim);
+
+    // ---------- Break the BT into pieces ----------
+    // 1. Turn the SVG path into flat shapes
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg"><path d="${MONOGRAM_PATH}"/></svg>`;
+    const shapes = new SVGLoader().parse(svg).paths.flatMap((p) => SVGLoader.createShapes(p));
+
+    // 2. Cut every shape into triangles; each triangle becomes one 3D shard
+    const material = new THREE.MeshStandardMaterial({
+      color: 0xd7c8bb,
+      metalness: 0.35,
+      roughness: 0.45,
+      emissive: 0xd7c8bb,
+      emissiveIntensity: 0.08,
+    });
+
+    const group = new THREE.Group();
+    const cx = MONOGRAM_VIEWBOX.x + MONOGRAM_VIEWBOX.w / 2;
+    const cy = MONOGRAM_VIEWBOX.y + MONOGRAM_VIEWBOX.h / 2;
+
+    type Shard = {
+      mesh: THREE.Mesh;
+      home: THREE.Vector3;
+      offset: THREE.Vector3;
+      spin: THREE.Euler;
+      delay: number;
+    };
+    const shards: Shard[] = [];
+
+    for (const shape of shapes) {
+      const points = shape.extractPoints(12);
+      const triangles = THREE.ShapeUtils.triangulateShape(points.shape, points.holes);
+      const all = [...points.shape, ...points.holes.flat()];
+
+      for (const [a, b, c] of triangles) {
+        // SVG y points down, 3D y points up: flip it
+        const pa = new THREE.Vector2(all[a].x - cx, -(all[a].y - cy));
+        const pb = new THREE.Vector2(all[b].x - cx, -(all[b].y - cy));
+        const pc = new THREE.Vector2(all[c].x - cx, -(all[c].y - cy));
+        const centre = new THREE.Vector2().add(pa).add(pb).add(pc).divideScalar(3);
+
+        const tri = new THREE.Shape([pa.sub(centre), pb.sub(centre), pc.sub(centre)]);
+        const geometry = new THREE.ExtrudeGeometry(tri, { depth: 14, bevelEnabled: false });
+        geometry.translate(0, 0, -7);
+
+        const mesh = new THREE.Mesh(geometry, material);
+        const home = new THREE.Vector3(centre.x, centre.y, 0);
+
+        // Where it flies from: outwards from the centre, plus some randomness
+        const dir = new THREE.Vector3(centre.x, centre.y, 0).normalize();
+        // (kept fairly tight and pushed backwards, so pieces don't cover the text)
+        const offset = dir
+          .multiplyScalar(120 + Math.random() * 180)
+          .add(new THREE.Vector3((Math.random() - 0.5) * 140, (Math.random() - 0.5) * 140, -100 - Math.random() * 400));
+
+        shards.push({
+          mesh,
+          home,
+          offset,
+          spin: new THREE.Euler((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6),
+          delay: Math.random() * 0.25,
+        });
+        group.add(mesh);
+      }
+    }
+
+    scene.add(group);
+
+    // ---------- Layout: logo to the right on desktop, centred on phones ----------
+    function resize() {
+      const { width, height } = stage.getBoundingClientRect();
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      const scale = isPhone ? 1.05 : Math.min(1.25, height / 700);
+      group.scale.setScalar(scale);
+      group.position.x = isPhone ? 0 : width * 0.18;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // ---------- Shatter, then drift back together ----------
+    const REASSEMBLE_MS = 4500;
+    let shatteredAt = performance.now();
+
+    const easeOut = (t: number) => 1 - Math.pow(1 - t, 4);
+
+    function placeShards(now: number) {
+      const elapsed = (now - shatteredAt) / REASSEMBLE_MS;
+      for (const s of shards) {
+        const t = easeOut(Math.min(Math.max((elapsed - s.delay) / (1 - s.delay), 0), 1));
+        const apart = 1 - t; // 1 = fully broken, 0 = whole
+        s.mesh.position.copy(s.home).addScaledVector(s.offset, apart);
+        s.mesh.rotation.set(s.spin.x * apart, s.spin.y * apart, s.spin.z * apart);
+      }
+    }
+
+    // ---------- Drag to spin ----------
+    let dragging = false;
+    let moved = 0;
+    let lastX = 0;
+    let lastY = 0;
+    let velX = 0;
+    let velY = 0;
+    let rotX = 0;
+    let rotY = 0;
+
+    canvas.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      moved = 0;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      canvas.setPointerCapture(e.pointerId);
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      moved += Math.abs(dx) + Math.abs(dy);
+      velY = dx * 0.006;
+      velX = dy * 0.006;
+      lastX = e.clientX;
+      lastY = e.clientY;
+    });
+
+    canvas.addEventListener('pointerup', () => {
+      dragging = false;
+      // A tap (not a drag) breaks it again
+      if (moved < 6) shatteredAt = performance.now();
+    });
+
+    // ---------- Render loop (pauses when the tab is hidden) ----------
+    function frame(now: number) {
+      placeShards(now);
+
+      rotY += velY;
+      rotX += velX;
+      velX *= 0.94; // slows down after you let go
+      velY *= 0.94;
+
+      // Gentle sway when nobody is touching it, and ease back to facing forward
+      if (!dragging) {
+        rotX *= 0.97;
+        rotY += (Math.sin(now / 1800) * 0.25 - rotY) * 0.02;
+      }
+
+      group.rotation.set(rotX, rotY, 0);
+      renderer.render(scene, camera);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+</script>
