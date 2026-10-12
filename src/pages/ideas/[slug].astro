@@ -1,0 +1,666 @@
+---
+import { render } from 'astro:content';
+import { Image } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getIdeas, readingTime, longDate, type Idea } from '../../lib/ideas';
+import avatar from '../../assets/images/hero-reference.jpg';
+
+export async function getStaticPaths() {
+  const ideas = await getIdeas(); // newest first
+
+  return ideas.map((idea, i) => ({
+    params: { slug: idea.id },
+    props: {
+      idea,
+      newer: ideas[i - 1], // undefined for the newest piece
+      older: ideas[i + 1], // undefined for the oldest piece
+    },
+  }));
+}
+
+interface Props {
+  idea: Idea;
+  newer?: Idea;
+  older?: Idea;
+}
+
+const { idea, newer, older } = Astro.props;
+const { title, subtitle, date, type, topic, cover, updated } = idea.data;
+const { Content } = await render(idea);
+const minutes = readingTime(idea);
+
+const bio = '[Two-line bio.]';
+
+// Share links need the full address of this page
+const pageUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href;
+const share = {
+  linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`,
+  x: `https://x.com/intent/post?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(title)}`,
+  whatsapp: `https://wa.me/?text=${encodeURIComponent(`${title} ${pageUrl}`)}`,
+};
+---
+
+<BaseLayout title={`${title} — Bruce Travis`}>
+  <div class="progress" aria-hidden="true"><div class="progress__bar"></div></div>
+
+  <div class="essay">
+    <header class="head">
+      <a class="head__back" href="/ideas">← All ideas</a>
+      <p class="head__kind">{type} · {topic}</p>
+      <h1 class="head__title">{title}</h1>
+      <p class="head__subtitle">{subtitle}</p>
+      <div class="byline">
+        <Image class="byline__avatar" src={avatar} alt="" width={80} height={80} />
+        <span class="byline__name">Bruce Travis</span>
+        <span aria-hidden="true">·</span>
+        <time datetime={date.toISOString()}>{longDate(date)}</time>
+        <span aria-hidden="true">·</span>
+        <span>{minutes} min read</span>
+      </div>
+    </header>
+
+    {cover && (
+      <Image class="lead" src={cover} alt="" widths={[800, 1312, 2000]} sizes="(max-width: 767px) 100vw, 1312px" loading="eager" />
+    )}
+
+    <article class="prose">
+      <Content />
+
+      {updated && (
+        <p class="updated">Updated {longDate(updated.date)} — {updated.note}</p>
+      )}
+    </article>
+
+    <section class="share" aria-label="Share">
+      <span class="share__label">Share</span>
+      <div class="share__links">
+        <button type="button" class="share__copy" data-url={pageUrl}>Copy link</button>
+        <a href={share.linkedin} target="_blank" rel="noopener">LinkedIn ↗</a>
+        <a href={share.x} target="_blank" rel="noopener">X ↗</a>
+        <a href={share.whatsapp} target="_blank" rel="noopener">WhatsApp ↗</a>
+      </div>
+    </section>
+
+    <section class="author">
+      <Image class="author__avatar" src={avatar} alt="" width={144} height={144} />
+      <div class="author__text">
+        <strong>Bruce Travis</strong>
+        <p>{bio} <a class="link" href="/about">More about me <span class="arrow" aria-hidden="true">→</span></a></p>
+      </div>
+    </section>
+
+    {(older || newer) && (
+      <nav class="pager" aria-label="More ideas">
+        {older ? (
+          <a class="pager__link" href={`/ideas/${older.id}`}>
+            <span class="pager__label">← Previous</span>
+            <span class="pager__title">{older.data.title}</span>
+          </a>
+        ) : <span />}
+        {newer && (
+          <a class="pager__link pager__link--next" href={`/ideas/${newer.id}`}>
+            <span class="pager__label">Next →</span>
+            <span class="pager__title">{newer.data.title}</span>
+          </a>
+        )}
+      </nav>
+    )}
+
+    <section class="subscribe" aria-labelledby="subscribe-title">
+      <h2 id="subscribe-title" class="subscribe__title">Get the next essay by email</h2>
+      <form class="subscribe__form">
+        <label for="essay-email" class="subscribe__label">Email address</label>
+        <input id="essay-email" type="email" name="email" placeholder="you@example.com" autocomplete="email" required />
+        <button type="submit">Subscribe</button>
+      </form>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  /* Reading progress: thin copper line at the very top */
+  .progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--border);
+    z-index: 100;
+  }
+
+  .progress__bar {
+    height: 100%;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  .essay *,
+  .essay :global(*) { box-sizing: border-box; }
+
+  .essay {
+    --wide: 1312px;
+    --text-col: 680px;
+    padding: 0 64px 112px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Head */
+  .head {
+    width: 100%;
+    max-width: 880px;
+    padding: 96px 0 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .head__back,
+  .head__kind,
+  .share__label,
+  .pager__label,
+  .updated,
+  .subscribe__label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .head__back {
+    align-self: flex-start;
+    text-decoration: none;
+    transition: color 200ms ease;
+  }
+
+  .head__back:hover { color: var(--accent); }
+
+  .head__kind {
+    margin: 0;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+  }
+
+  .head__title {
+    margin: 0;
+    font-size: 88px;
+    line-height: 0.98;
+    letter-spacing: -0.015em;
+    color: var(--brand);
+  }
+
+  .head__subtitle {
+    margin: 0;
+    font-size: 24px;
+    line-height: 1.45;
+  }
+
+  .byline {
+    margin-top: 12px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    font-size: 15px;
+    color: var(--muted);
+  }
+
+  .byline :global(.byline__avatar) {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: 70% 20%;
+  }
+
+  .byline__name { color: var(--text); }
+
+  /* Lead image */
+  .essay :global(.lead) {
+    display: block;
+    width: 100%;
+    max-width: var(--wide);
+    height: auto;
+    aspect-ratio: 21 / 9;
+    object-fit: cover;
+    border: 1px solid var(--border);
+  }
+
+  /* The essay text (Markdown, so styles need :global) */
+  .prose {
+    width: 100%;
+    max-width: var(--text-col);
+    padding-top: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    font-size: 20px;
+    line-height: 1.75;
+  }
+
+  .prose :global(p) { margin: 0; }
+
+  /* Drop cap on the first paragraph */
+  .prose > :global(p:first-child::first-letter) {
+    float: left;
+    font-family: var(--font-display);
+    font-size: 84px;
+    line-height: 0.8;
+    padding: 8px 12px 0 0;
+    color: var(--brand);
+  }
+
+  .prose :global(h2) {
+    margin: 24px 0 0;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 40px;
+    line-height: 1.15;
+    color: var(--brand);
+    scroll-margin-top: 120px;
+  }
+
+  .prose :global(h3) {
+    margin: 16px 0 0;
+    font-size: 22px;
+    font-weight: 600;
+  }
+
+  .prose :global(a) {
+    color: var(--brand);
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 4px;
+    transition: color 200ms ease;
+  }
+
+  .prose :global(a:hover) { color: var(--accent); }
+
+  .prose :global(ul),
+  .prose :global(ol) {
+    margin: 0;
+    padding-left: 24px;
+  }
+
+  /* Pull quote: wider than the text, centred */
+  .prose :global(blockquote) {
+    margin: 24px -100px;
+    padding: 0;
+    font-family: var(--font-display);
+    font-size: 44px;
+    line-height: 1.2;
+    text-align: center;
+    color: var(--brand);
+  }
+
+  .prose :global(blockquote p::before) { content: '“'; }
+  .prose :global(blockquote p::after) { content: '”'; }
+
+  /* Images and figures: wider than the text */
+  .prose :global(img) {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+  }
+
+  .prose :global(figure) {
+    margin: 24px -200px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .prose :global(figure img) { width: 100%; }
+
+  .prose :global(figcaption) {
+    padding-left: 200px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* Code */
+  .prose :global(pre) {
+    margin: 0;
+    padding: 24px;
+    background: var(--surface) !important;
+    border: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.7;
+    overflow-x: auto;
+  }
+
+  .prose :global(:not(pre) > code) {
+    padding: 2px 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+  }
+
+  /* Footnotes */
+  .prose :global(sup a) {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .prose :global(.footnotes) {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .prose :global(.footnotes h2) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .prose :global(.footnotes ol) { padding-left: 20px; }
+  .prose :global(.footnotes a) { color: var(--muted); }
+
+  .updated { margin: 0; }
+
+  /* Share */
+  .share {
+    width: 100%;
+    max-width: var(--text-col);
+    margin-top: 72px;
+    padding: 32px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .share__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  .share__links a,
+  .share__copy {
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--brand);
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 200ms ease;
+  }
+
+  .share__links a:hover,
+  .share__copy:hover { color: var(--accent); }
+
+  /* Author */
+  .author {
+    width: 100%;
+    max-width: var(--text-col);
+    margin-top: 56px;
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  .author :global(.author__avatar) {
+    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: 70% 20%;
+  }
+
+  .author__text {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .author__text strong { font-weight: 600; font-size: 17px; }
+
+  .author__text p {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  /* Previous / next */
+  .pager {
+    width: 100%;
+    max-width: var(--wide);
+    margin-top: 112px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
+
+  .pager__link {
+    padding: 40px;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-decoration: none;
+    transition: border-color 300ms ease;
+  }
+
+  .pager__link--next {
+    grid-column: 2;
+    text-align: right;
+  }
+
+  .pager__title {
+    font-family: var(--font-display);
+    font-size: 36px;
+    line-height: 1.1;
+    color: var(--brand);
+    transition: color 300ms ease;
+  }
+
+  .pager__link:hover { border-color: var(--border-strong); }
+  .pager__link:hover .pager__title { color: var(--accent); }
+
+  /* Subscribe */
+  .subscribe {
+    width: 100%;
+    max-width: var(--wide);
+    margin-top: 24px;
+    padding: 48px;
+    box-sizing: border-box;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+  }
+
+  .subscribe__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 40px;
+    color: var(--brand);
+  }
+
+  .subscribe__form {
+    display: flex;
+    gap: 12px;
+    width: 480px;
+    max-width: 100%;
+  }
+
+  .subscribe__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .subscribe__form input {
+    flex: 1;
+    min-width: 0;
+    height: 52px;
+    padding: 0 16px;
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    font: inherit;
+    font-size: 16px;
+  }
+
+  .subscribe__form input:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+
+  .subscribe__form button {
+    height: 52px;
+    padding: 0 24px;
+    background: var(--brand);
+    border: none;
+    color: var(--bg);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .subscribe__form button:hover { background: var(--text); }
+
+  /* Tablet: pull quotes and figures stay inside the column */
+  @media (max-width: 1100px) {
+    .prose :global(blockquote) { margin: 24px 0; }
+    .prose :global(figure) { margin: 24px 0; }
+    .prose :global(figcaption) { padding-left: 0; }
+    .head__title { font-size: 64px; }
+    .subscribe { flex-direction: column; align-items: stretch; }
+    .subscribe__form { width: 100%; }
+  }
+
+  /* Phone */
+  @media (max-width: 767px) {
+    .essay { padding: 0 0 72px; }
+
+    .head { padding: 40px 20px 32px; gap: 16px; }
+    .head__back { min-height: 44px; display: flex; align-items: center; }
+    .head__kind { font-size: 12px; }
+    .head__title { font-size: 44px; line-height: 1.02; }
+    .head__subtitle { font-size: 19px; }
+    .byline { margin-top: 0; padding-top: 16px; gap: 8px; font-size: 14px; }
+    .byline :global(.byline__avatar) { display: none; }
+
+    .essay :global(.lead) { aspect-ratio: 4 / 3; border-left: none; border-right: none; }
+
+    .prose { padding: 40px 20px 0; gap: 22px; font-size: 18px; }
+    .prose :global(h2) { margin-top: 16px; font-size: 30px; }
+
+    .prose :global(blockquote) {
+      margin: 16px 0;
+      padding-left: 16px;
+      border-left: 2px solid var(--accent);
+      font-size: 28px;
+      line-height: 1.25;
+      text-align: left;
+    }
+
+    .prose :global(figure) { margin: 8px -20px; }
+    .prose :global(figure img) { border-left: none; border-right: none; }
+    .prose :global(figcaption) { padding: 0 20px; font-size: 11px; }
+    .prose :global(pre) { padding: 18px; font-size: 13px; }
+    .prose :global(.footnotes) { font-size: 14px; }
+
+    .share,
+    .author,
+    .pager,
+    .subscribe { width: auto; align-self: stretch; margin-left: 20px; margin-right: 20px; }
+
+    .share { margin-top: 48px; padding: 20px 0; flex-direction: column; align-items: flex-start; gap: 14px; }
+    .share__label { font-size: 11px; }
+    .share__links { gap: 18px; }
+
+    .author { margin-top: 32px; gap: 16px; }
+    .author :global(.author__avatar) { width: 56px; height: 56px; }
+    .author__text strong { font-size: 16px; }
+    .author__text p { font-size: 15px; }
+
+    /* Next first on phones, then previous */
+    .pager { margin-top: 56px; grid-template-columns: 1fr; gap: 12px; }
+    .pager__link { padding: 24px; gap: 8px; }
+    .pager__link--next { grid-column: 1; grid-row: 1; text-align: left; }
+    .pager__title { font-size: 26px; }
+    .pager__label { font-size: 11px; }
+
+    .subscribe { margin-top: 24px; padding: 24px; gap: 14px; }
+    .subscribe__title { font-size: 28px; }
+    .subscribe__label { position: static; width: auto; height: auto; clip: auto; font-size: 11px; }
+    .subscribe__form { flex-direction: column; }
+    .subscribe__form input { flex: none; }
+  }
+</style>
+
+<script>
+  // Reading progress: how far down the essay the reader is
+  const bar = document.querySelector<HTMLElement>('.progress__bar');
+  const article = document.querySelector<HTMLElement>('.prose');
+
+  if (bar && article) {
+    let ticking = false;
+
+    const update = () => {
+      const start = article.offsetTop;
+      const end = start + article.offsetHeight - window.innerHeight;
+      const progress = Math.min(Math.max((window.scrollY - start) / Math.max(end - start, 1), 0), 1);
+      bar.style.transform = `scaleX(${progress})`;
+      ticking = false;
+    };
+
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (!ticking) {
+          requestAnimationFrame(update);
+          ticking = true;
+        }
+      },
+      { passive: true }
+    );
+    update();
+  }
+
+  // Copy link
+  const copy = document.querySelector<HTMLButtonElement>('.share__copy');
+  copy?.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(copy.dataset.url ?? location.href);
+      copy.textContent = 'Copied ✓';
+    } catch {
+      copy.textContent = 'Press Ctrl + C';
+    }
+    setTimeout(() => (copy.textContent = 'Copy link'), 2000);
+  });
+</script>

@@ -26,4 +26,24 @@ const work = defineCollection({
     }),
 });
 
-export const collections = { work };
+const ideas = defineCollection({
+    loader: glob({ pattern: '**/*.md', base: './src/content/ideas' }),
+    schema: ({ image }) =>
+    z.object({
+        title: z.string(),
+        subtitle: z.string(),
+        date: z.coerce.date(),
+        type: z.enum(['essay', 'note']).default('essay'),
+        topic: z.enum(['Engineering', 'Security', 'Adoption', 'Africa & tech', 'Building']),
+        cover: image().optional(),
+        updated: z
+            .object({
+            date: z.coerce.date(),
+            note: z.string(),
+            })
+            .optional(),
+        draft: z.boolean().default(false),
+    }),
+});
+
+export const collections = { work, ideas };

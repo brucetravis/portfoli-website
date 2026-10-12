@@ -1,0 +1,549 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getIdeas, readingTime, groupByYear, shortDate, TOPICS } from '../../lib/ideas';
+
+const intro = '[One line: what you write about, e.g. building, security, and how African businesses adopt technology.]';
+const promise = '[Promise line — same as the homepage Notes block.]';
+
+const ideas = await getIdeas();
+const latest = ideas[0];
+const years = groupByYear(ideas);
+
+// Only show filter buttons for topics that have at least one piece
+const topics = TOPICS.filter((t) => ideas.some((i) => i.data.topic === t));
+const count = `${ideas.length} ${ideas.length === 1 ? 'piece' : 'pieces'}`;
+
+const monthYear = (d: Date) => d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+---
+
+<BaseLayout title="Ideas — Bruce Travis">
+  <div class="ideas">
+    <header class="intro">
+      <p class="intro__count">Essays &amp; notes · {count}</p>
+      <h1 class="intro__title">Ideas</h1>
+      <p class="intro__text">{intro}</p>
+    </header>
+
+    {ideas.length === 0 ? (
+      <p class="empty">The first essay is on its way.</p>
+    ) : (
+      <>
+        {topics.length > 1 && (
+          <div class="filters" role="group" aria-label="Filter by topic" hidden>
+            <button type="button" class="filter" data-filter="All" aria-pressed="true">All</button>
+            {topics.map((t) => (
+              <button type="button" class="filter" data-filter={t} aria-pressed="false">{t}</button>
+            ))}
+          </div>
+        )}
+
+        {/* The latest piece, set large */}
+        <article class:list={['latest', { 'latest--image': latest.data.cover }]} data-latest>
+          <div class="latest__text">
+            <p class="latest__meta">
+              Latest · {latest.data.type} · {readingTime(latest)} min · {monthYear(latest.data.date)}
+            </p>
+            <h2 class="latest__title">
+              <a href={`/ideas/${latest.id}`}>{latest.data.title}</a>
+            </h2>
+            <p class="latest__excerpt">{latest.data.subtitle}</p>
+            <span class="link latest__cta" aria-hidden="true">
+              Read the {latest.data.type} <span class="arrow">→</span>
+            </span>
+          </div>
+          {latest.data.cover && (
+            <Image class="latest__image" src={latest.data.cover} alt="" widths={[520, 1040]} sizes="520px" />
+          )}
+        </article>
+
+        {/* Everything, grouped by year. The latest row is hidden until a filter is picked. */}
+        {years.map(([year, list]) => (
+          <section class="year" data-year>
+            <h2 class="year__label">{year}</h2>
+            <ul class="year__list">
+              {list.map((idea) => (
+                <li
+                  class="row"
+                  data-topic={idea.data.topic}
+                  data-is-latest={idea.id === latest.id ? '' : undefined}
+                  hidden={idea.id === latest.id}
+                >
+                  <span class="row__date">{shortDate(idea.data.date)}</span>
+                  <div class="row__main">
+                    <a class="row__title" href={`/ideas/${idea.id}`}>{idea.data.title}</a>
+                    <span class="row__excerpt">{idea.data.subtitle}</span>
+                  </div>
+                  <span class="row__meta">{idea.data.type} · {readingTime(idea)} min</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+
+        <p class="none" hidden>Nothing on this topic yet.</p>
+      </>
+    )}
+
+    <section class="subscribe" aria-labelledby="subscribe-title">
+      <div class="subscribe__text">
+        <h2 id="subscribe-title" class="subscribe__title">Get new pieces by email</h2>
+        <p class="subscribe__promise">{promise}</p>
+      </div>
+      <form class="subscribe__form">
+        <label for="ideas-email" class="sr-only">Email address</label>
+        <input id="ideas-email" type="email" name="email" placeholder="you@example.com" autocomplete="email" required />
+        <button type="submit">Subscribe</button>
+      </form>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .ideas {
+    --side: 64px;
+    padding-bottom: 112px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mono,
+  .intro__count,
+  .latest__meta,
+  .row__date,
+  .row__meta {
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Intro */
+  .intro {
+    padding: 96px var(--side) 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .intro__count {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .intro__title {
+    margin: 0;
+    font-size: 128px;
+    line-height: 0.92;
+    letter-spacing: -0.02em;
+    color: var(--brand);
+  }
+
+  .intro__text {
+    margin: 0;
+    max-width: 620px;
+    font-size: 21px;
+    line-height: 1.55;
+  }
+
+  .empty,
+  .none {
+    margin: 0 var(--side);
+    font-size: 18px;
+    color: var(--muted);
+  }
+
+  .none { margin-top: 64px; }
+
+  /* Filters: a strip between two lines */
+  .filters {
+    margin: 0 var(--side);
+    padding: 20px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+  }
+
+  .filter {
+    flex-shrink: 0;
+    height: 40px;
+    padding: 0 18px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--brand);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 200ms ease, color 200ms ease;
+  }
+
+  .filter:hover,
+  .filter[aria-pressed='true'] {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .filter:focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; }
+
+  /* Latest */
+  .latest {
+    position: relative;
+    margin: 64px var(--side) 0;
+  }
+
+  .latest[hidden] { display: none; }
+
+  .latest--image {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 520px;
+    gap: 64px;
+    align-items: end;
+  }
+
+  .latest__text {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .latest__meta {
+    margin: 0;
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  .latest__title {
+    margin: 0;
+    max-width: 1000px;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 64px;
+    line-height: 1.02;
+  }
+
+  .latest__title a {
+    color: var(--brand);
+    text-decoration: none;
+    transition: color 300ms ease;
+  }
+
+  /* Whole block is clickable */
+  .latest__title a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .latest__title a:focus-visible { outline: none; }
+  .latest:focus-within { outline: 1px solid var(--accent); outline-offset: 12px; }
+
+  .latest__excerpt {
+    margin: 0;
+    max-width: 620px;
+    font-size: 19px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .latest__cta { font-size: 15px; font-weight: 500; }
+
+  .latest:hover .latest__title a,
+  .latest:hover .latest__cta { color: var(--accent); }
+  .latest:hover .latest__cta .arrow { transform: translateX(4px); }
+
+  .latest :global(.latest__image) {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border: 1px solid var(--border);
+  }
+
+  /* Year groups */
+  .year {
+    margin: 112px var(--side) 0;
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    column-gap: 64px;
+  }
+
+  .year + .year { margin-top: 80px; }
+  .year[hidden] { display: none; }
+
+  .year__label {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 48px;
+    line-height: 1;
+    color: var(--muted);
+  }
+
+  .year__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .row {
+    position: relative;
+    padding: 28px 0;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr) 160px;
+    gap: 32px;
+    align-items: baseline;
+  }
+
+  .row[hidden] { display: none; }
+
+  /* Thin copper line that draws along the bottom on hover */
+  .row::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    width: 100%;
+    height: 1px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .row:hover::after,
+  .row:focus-within::after { transform: scaleX(1); }
+
+  .row__date,
+  .row__meta {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .row__meta { text-align: right; }
+
+  .row__main {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .row__title {
+    font-family: var(--font-display);
+    font-size: 32px;
+    line-height: 1.1;
+    color: var(--text);
+    text-decoration: none;
+    transition: color 200ms ease;
+  }
+
+  /* Whole row is clickable */
+  .row__title::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .row:hover .row__title { color: var(--accent); }
+  .row__title:focus-visible { outline: none; }
+
+  .row__excerpt {
+    font-size: 16px;
+    color: var(--muted);
+  }
+
+  /* Subscribe box */
+  .subscribe {
+    margin: 112px var(--side) 0;
+    padding: 48px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 48px;
+  }
+
+  .subscribe__text {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .subscribe__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 40px;
+    color: var(--brand);
+  }
+
+  .subscribe__promise {
+    margin: 0;
+    font-size: 17px;
+    color: var(--muted);
+  }
+
+  .subscribe__form {
+    display: flex;
+    gap: 12px;
+    width: 480px;
+    max-width: 100%;
+  }
+
+  .subscribe__form input {
+    flex: 1;
+    min-width: 0;
+    height: 52px;
+    padding: 0 16px;
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    font: inherit;
+    font-size: 16px;
+  }
+
+  .subscribe__form input:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+
+  .subscribe__form button {
+    height: 52px;
+    padding: 0 24px;
+    background: var(--brand);
+    border: none;
+    color: var(--bg);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .subscribe__form button:hover { background: var(--text); }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  /* Tablet */
+  @media (max-width: 1023px) {
+    .ideas { --side: 32px; }
+    .intro__title { font-size: 96px; }
+    .latest--image { grid-template-columns: 1fr; }
+    .year { grid-template-columns: 1fr; row-gap: 16px; }
+    .subscribe { flex-direction: column; align-items: stretch; }
+    .subscribe__form { width: 100%; }
+  }
+
+  /* Phone */
+  @media (max-width: 767px) {
+    .ideas { --side: 20px; padding-bottom: 72px; }
+
+    .intro { padding: 48px var(--side) 28px; gap: 16px; }
+    .intro__count { font-size: 12px; }
+    .intro__title { font-size: 72px; line-height: 0.95; }
+    .intro__text { font-size: 18px; }
+
+    /* Filters scroll sideways */
+    .filters {
+      margin: 0;
+      padding: 0 var(--side) 24px;
+      border: none;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .filters::-webkit-scrollbar { display: none; }
+    .filter { height: 44px; padding: 0 16px; }
+
+    .latest {
+      margin: 0 var(--side);
+      padding: 28px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .latest__text { gap: 12px; }
+    .latest__meta { font-size: 11px; }
+    .latest__title { font-size: 38px; line-height: 1.05; }
+    .latest__excerpt { font-size: 17px; }
+    .latest__cta { min-height: 44px; display: flex; align-items: center; }
+
+    .year { margin-top: 40px; row-gap: 12px; }
+    .year + .year { margin-top: 40px; }
+    .year__label { font-size: 36px; }
+
+    /* Row: "12 OCT · ESSAY · 4 MIN" on one line, then title, then excerpt */
+    .row {
+      padding: 20px 0;
+      grid-template-columns: auto 1fr;
+      column-gap: 0;
+      row-gap: 8px;
+    }
+
+    .row__date,
+    .row__meta { font-size: 11px; }
+    .row__meta { text-align: left; grid-row: 1; grid-column: 2; }
+    .row__meta::before { content: '\00a0·\00a0'; }
+    .row__main { grid-column: 1 / -1; }
+    .row__title { font-size: 26px; }
+    .row__excerpt { font-size: 15px; }
+
+    .subscribe { margin-top: 64px; padding: 24px; gap: 20px; }
+    .subscribe__title { font-size: 32px; }
+    .subscribe__form { flex-direction: column; }
+    .subscribe__form input { flex: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .row::after { transition: none; }
+    .latest:hover .latest__cta .arrow { transform: none; }
+  }
+</style>
+
+<script>
+  const filters = document.querySelector<HTMLElement>('.filters');
+
+  if (filters) {
+    // Buttons only appear once JavaScript has loaded, so they always work
+    filters.hidden = false;
+
+    const buttons = filters.querySelectorAll<HTMLButtonElement>('.filter');
+    const latest = document.querySelector<HTMLElement>('[data-latest]');
+    const rows = document.querySelectorAll<HTMLElement>('.row');
+    const years = document.querySelectorAll<HTMLElement>('[data-year]');
+    const none = document.querySelector<HTMLElement>('.none');
+
+    const apply = (topic: string) => {
+      const all = topic === 'All';
+
+      // "All": latest piece shown large. A topic: everything in the list instead.
+      if (latest) latest.hidden = !all;
+
+      rows.forEach((row) => {
+        const isLatest = row.hasAttribute('data-is-latest');
+        row.hidden = all ? isLatest : row.dataset.topic !== topic;
+      });
+
+      // Hide a year when none of its rows are showing
+      years.forEach((year) => {
+        year.hidden = !year.querySelector('.row:not([hidden])');
+      });
+
+      const anything = !all && document.querySelector('.row:not([hidden])');
+      if (none) none.hidden = all || Boolean(anything);
+
+      buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === topic)));
+    };
+
+    buttons.forEach((b) => b.addEventListener('click', () => apply(b.dataset.filter ?? 'All')));
+    apply('All');
+  }
+</script>
