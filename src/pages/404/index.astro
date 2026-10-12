@@ -8,25 +8,25 @@ const line = "The link is wrong, or the page moved. Try one of these instead:";
 ---
 
 <BaseLayout title="Page not found — Bruce Travis">
-    <section class="lost">
-        <div class="stage" aria-hidden="true">
-            <canvas class="stage__canvas"></canvas>
-            <!-- Shown if 3D can't run (no WebGL, or reduced motion) -->
-            <div class="stage__fallback"><Monogram size={260} /></div>
-        </div>
+  <section class="lost">
+    <div class="stage" aria-hidden="true">
+      <canvas class="stage__canvas"></canvas>
+      <!-- Shown if 3D can't run (no WebGL, or reduced motion) -->
+      <div class="stage__fallback"><Monogram size={260} /></div>
+    </div>
 
-        <div class="lost__text">
-            <p class="lost__code">Error 404</p>
-            <h1 class="lost__title">This page broke.</h1>
-            <p class="lost__line">{line}</p>
-            <nav class="lost__links" aria-label="Helpful links">
-                <a class="link" href="/">Home <span class="arrow" aria-hidden="true">→</span></a>
-                <a class="link" href="/work">Work <span class="arrow" aria-hidden="true">→</span></a>
-                <a class="link" href="/ideas">Ideas <span class="arrow" aria-hidden="true">→</span></a>
-            </nav>
-            <p class="lost__hint" hidden>Psst — drag the pieces. Tap to break it again.</p>
-        </div>
-    </section>
+    <div class="lost__text">
+      <p class="lost__code">Error 404</p>
+      <h1 class="lost__title">This page broke.</h1>
+      <p class="lost__line">{line}</p>
+      <nav class="lost__links" aria-label="Helpful links">
+        <a class="link" href="/">Home <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="link" href="/work">Work <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="link" href="/ideas">Ideas <span class="arrow" aria-hidden="true">→</span></a>
+      </nav>
+      <p class="lost__hint" hidden>Psst — drag the pieces. Tap to break it again.</p>
+    </div>
+  </section>
 </BaseLayout>
 
 <style>
@@ -52,21 +52,26 @@ const line = "The link is wrong, or the page moved. Try one of these instead:";
 
   .stage__canvas:active { cursor: grabbing; }
 
+  /* The still logo shows straight away, so the page is never empty.
+     Once the 3D version is ready, it takes over and the still logo fades out. */
   .stage__fallback {
     position: absolute;
     top: 50%;
     right: 12%;
     transform: translateY(-50%);
-    display: none;
+    transition: opacity 300ms ease;
   }
+
+  .stage__fallback :global(.monogram) { display: block; }
+
+  .lost.is-3d .stage__fallback { opacity: 0; }
 
   .stage__fallback :global(.monogram) {
     filter: drop-shadow(0 0 8px rgb(215 200 187 / 0.75)) drop-shadow(0 0 30px rgb(215 200 187 / 0.4));
   }
 
-  /* No 3D: hide the canvas, show the still logo */
+  /* No 3D: hide the canvas, keep the still logo */
   .lost.is-static .stage__canvas { display: none; }
-  .lost.is-static .stage__fallback { display: block; }
 
   .lost__text {
     position: absolute;
@@ -164,6 +169,8 @@ const line = "The link is wrong, or the page moved. Try one of these instead:";
   const canvas = document.querySelector<HTMLCanvasElement>('.stage__canvas')!;
   const stage = document.querySelector<HTMLElement>('.stage')!;
   const hint = document.querySelector<HTMLElement>('.lost__hint')!;
+  const fallback = document.querySelector<HTMLElement>('.stage__fallback')!;
+  const fallbackSvg = fallback.querySelector<SVGElement>('svg')!;
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -229,7 +236,7 @@ const line = "The link is wrong, or the page moved. Try one of these instead:";
     const shards: Shard[] = [];
 
     for (const shape of shapes) {
-      const points = shape.extractPoints(12);
+      const points = shape.extractPoints(6);
       const triangles = THREE.ShapeUtils.triangulateShape(points.shape, points.holes);
       const all = [...points.shape, ...points.holes.flat()];
 
@@ -277,21 +284,38 @@ const line = "The link is wrong, or the page moved. Try one of these instead:";
       const scale = isPhone ? 1.05 : Math.min(1.25, height / 700);
       group.scale.setScalar(scale);
       group.position.x = isPhone ? 0 : width * 0.18;
+
+      // Put the still logo exactly where the 3D one will be, at the same size
+      const pxPerUnit = height / (2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
+      fallback.style.left = `${width / 2 + group.position.x * pxPerUnit}px`;
+      fallback.style.right = 'auto';
+      fallback.style.transform = 'translate(-50%, -50%)';
+      fallbackSvg.style.height = `${MONOGRAM_VIEWBOX.h * scale * pxPerUnit}px`;
+      fallbackSvg.style.width = 'auto';
     }
     resize();
     window.addEventListener('resize', resize);
 
-    // ---------- Shatter, then drift back together ----------
-    const REASSEMBLE_MS = 4500;
-    let shatteredAt = performance.now();
+    // ---------- Break apart fast, then drift back together ----------
+    const BREAK_MS = 700;
+    const REASSEMBLE_MS = 3500;
+    const START_DELAY_MS = 400; // a moment to see the whole logo first
+    let shatteredAt = performance.now() + START_DELAY_MS;
 
     const easeOut = (t: number) => 1 - Math.pow(1 - t, 4);
+    const clamp = (t: number) => Math.min(Math.max(t, 0), 1);
+
+    // How broken the logo is: 0 = whole, 1 = fully broken
+    function brokenness(now: number, delay: number) {
+      const since = now - shatteredAt;
+      if (since < BREAK_MS) return easeOut(clamp(since / BREAK_MS));
+      const back = clamp((since - BREAK_MS) / REASSEMBLE_MS);
+      return 1 - easeOut(clamp((back - delay) / (1 - delay)));
+    }
 
     function placeShards(now: number) {
-      const elapsed = (now - shatteredAt) / REASSEMBLE_MS;
       for (const s of shards) {
-        const t = easeOut(Math.min(Math.max((elapsed - s.delay) / (1 - s.delay), 0), 1));
-        const apart = 1 - t; // 1 = fully broken, 0 = whole
+        const apart = brokenness(now, s.delay);
         s.mesh.position.copy(s.home).addScaledVector(s.offset, apart);
         s.mesh.rotation.set(s.spin.x * apart, s.spin.y * apart, s.spin.z * apart);
       }
@@ -332,7 +356,7 @@ const line = "The link is wrong, or the page moved. Try one of these instead:";
       if (moved < 6) shatteredAt = performance.now();
     });
 
-    // ---------- Render loop (pauses when the tab is hidden) ----------
+    // ---------- Render loop (the browser pauses it when the tab is hidden) ----------
     function frame(now: number) {
       placeShards(now);
 
@@ -349,6 +373,10 @@ const line = "The link is wrong, or the page moved. Try one of these instead:";
 
       group.rotation.set(rotX, rotY, 0);
       renderer.render(scene, camera);
+
+      // First frame drawn: hand over from the still logo to the 3D one
+      if (!section.classList.contains('is-3d')) section.classList.add('is-3d');
+
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
