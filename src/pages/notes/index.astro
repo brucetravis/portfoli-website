@@ -1,0 +1,208 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+// ---- Content ----
+const promise = "[Promise line — what you send and why it's worth opening.]";
+const whatYouGet = [
+  '[New essays, the day they publish]',
+  "[What you're building, and what broke]",
+  '[Talks and events, first — when they exist]',
+];
+const privacy = 'You’ll get one email to confirm. No spam, unsubscribe in one click.';
+// -----------------
+---
+
+<BaseLayout title="Notes — Bruce Travis">
+    <div class="notes">
+        <div class="notes__intro">
+            <p class="eyebrow">Email · about once a month</p>
+            <h1 class="notes__title">Notes</h1>
+            <p class="notes__promise">{promise}</p>
+
+            <ol class="perks">
+                {whatYouGet.map((item, i) => (
+                <li class="perk">
+                    <span class="perk__num">{String(i + 1).padStart(2, '0')}</span>
+                    <span>{item}</span>
+                </li>
+                ))}
+            </ol>
+        </div>
+
+        <form class="signup">
+            <h2 class="signup__title">Subscribe</h2>
+            <label for="notes-email" class="eyebrow">Email address</label>
+            <input id="notes-email" type="email" name="email" placeholder="you@example.com" autocomplete="email" required />
+            <button type="submit">Subscribe</button>
+            <p class="signup__small">{privacy}</p>
+        </form>
+    </div>
+</BaseLayout>
+
+<style>
+    .notes {
+        padding: 120px 64px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 520px;
+        grid-template-areas: 'intro signup';
+        column-gap: 120px;
+        align-items: start;
+    }
+
+    .eyebrow {
+        margin: 0;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .notes__intro {
+        grid-area: intro;
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+    }
+
+    .notes__title {
+        margin: 0;
+        font-size: 144px;
+        line-height: 0.9;
+        letter-spacing: -0.02em;
+        color: var(--brand);
+    }
+
+    .notes__promise {
+        margin: 0;
+        max-width: 560px;
+        font-size: 24px;
+        line-height: 1.5;
+    }
+
+    .perks {
+        list-style: none;
+        margin: 24px 0 0;
+        padding: 0;
+        max-width: 560px;
+        border-top: 1px solid var(--border);
+    }
+
+    .perk {
+        padding: 18px 0;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        gap: 24px;
+        font-size: 17px;
+    }
+
+    .perk__num {
+        width: 28px;
+        flex-shrink: 0;
+        padding-top: 3px;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--accent);
+    }
+
+    /* Signup box */
+    .signup {
+        grid-area: signup;
+        padding: 40px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .signup .eyebrow { font-size: 12px; letter-spacing: 0.04em; }
+
+    .signup__title {
+        margin: 0 0 8px;
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: 36px;
+        color: var(--brand);
+    }
+
+    .signup input {
+        height: 56px;
+        padding: 0 16px;
+        background: var(--bg);
+        border: 1px solid var(--border-strong);
+        color: var(--text);
+        font: inherit;
+        font-size: 16px;
+    }
+
+    .signup input:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+
+    .signup button {
+        height: 56px;
+        background: var(--brand);
+        border: none;
+        color: var(--bg);
+        font: inherit;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 200ms ease;
+    }
+
+    .signup button:hover { background: var(--text); }
+
+    .signup__small {
+        margin: 6px 0 0;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--muted);
+    }
+
+    /* Tablet */
+    @media (max-width: 1023px) {
+        .notes {
+        padding: 80px 32px;
+        grid-template-columns: 1fr;
+        grid-template-areas: 'intro' 'signup';
+        row-gap: 48px;
+        }
+
+        .notes__title { font-size: 112px; }
+        .signup { max-width: 520px; }
+    }
+
+    /* Phone: the form comes right after the promise —
+        people arriving here from a link came to subscribe */
+    @media (max-width: 767px) {
+        .notes {
+        padding: 56px 20px 64px;
+        grid-template-areas: none;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        }
+
+        .notes__intro { display: contents; }
+        .eyebrow { font-size: 12px; }
+        .notes__title { font-size: 80px; line-height: 0.92; }
+        .notes__promise { font-size: 19px; }
+
+        .signup {
+        order: 1;
+        margin-top: 8px;
+        padding: 24px;
+        gap: 12px;
+        max-width: none;
+        }
+
+        .signup__title { display: none; }
+        .signup .eyebrow { font-size: 11px; }
+        .signup input,
+        .signup button { height: 52px; }
+
+        .perks { order: 2; margin-top: 16px; }
+        .perk { padding: 16px 0; gap: 16px; font-size: 16px; }
+        .perk__num { width: auto; font-size: 11px; }
+    }
+</style>
