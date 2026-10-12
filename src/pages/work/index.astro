@@ -1,0 +1,245 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProjectCover from '../../features/project-page/ProjectCover.astro';
+import { getWall } from '../../lib/projects';
+
+const { all, wall, archive } = await getWall();
+
+const years = all.map((p) => p.data.date.getFullYear());
+const first = Math.min(...years);
+const last = Math.max(...years);
+const range = first === last ? `${first}` : `${first}–${last}`;
+const count = `${all.length} ${all.length === 1 ? 'project' : 'projects'}`;
+---
+
+<BaseLayout title="Work — Bruce Travis">
+    <section class="archive">
+        <header class="archive__head">
+            <h1 class="archive__title">Work</h1>
+            <p class="archive__count">
+                {count} · {range}
+                {archive.length > 0 && <a class="link archive__all" href="/work/archive">Archive ({archive.length}) <span class="arrow" aria-hidden="true">→</span></a>}
+            </p>
+        </header>
+
+        <ul class="bento">
+            {wall.map(({ project: p, size }) => (
+                <li class={`tile tile--${size}`}>
+                <ProjectCover title={p.data.title} label={p.data.label} as="h2" ratio="auto" />
+
+                {p.data.pinned && <span class="tile__badge">Featured</span>}
+
+                <p class="tile__meta">
+                    {p.data.date.getFullYear()} · <span class="tile__dot" aria-hidden="true">●</span> <span class="tile__status">{p.data.status}</span>
+                </p>
+
+                <a class="tile__link" href={`/work/${p.id}`}>
+                    <span class="sr-only">Read the build: {p.data.title} {p.data.label}</span>
+                </a>
+                </li>
+            ))}
+        </ul>
+    </section>
+</BaseLayout>
+
+<style>
+    .archive {
+        padding: 32px clamp(16px, 4vw, 64px) clamp(48px, 6vw, 64px);
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .archive__head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 24px;
+    }
+
+    .archive__title {
+        margin: 0;
+        font-size: clamp(56px, 6vw, 88px);
+        line-height: 0.9;
+        letter-spacing: -0.02em;
+        color: var(--brand);
+    }
+
+    .archive__count {
+        margin: 0;
+        display: flex;
+        gap: 24px;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    /* The bento: 12 columns × 6 rows. Rows are 120px tall by default */
+    .bento {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        grid-auto-rows: 120px;
+        grid-auto-flow: dense;
+        gap: 16px;
+    }
+
+    /* Tile sizes: columns × rows. Together, 7 tiles fill 12 × 6 exactly:
+        featured + tall + small + small  (top 4 rows)
+        wide + small + small             (bottom 2 rows) */
+    .tile--featured { grid-column: span 6; grid-row: span 4; }
+    .tile--tall     { grid-column: span 3; grid-row: span 4; }
+    .tile--wide     { grid-column: span 6; grid-row: span 2; }
+    .tile--small    { grid-column: span 3; grid-row: span 2; }
+
+    /* Fit to one screen (desktop): the page becomes exactly the screen height.
+        Header, bento and footer share it, so nothing scrolls. */
+    @media (min-width: 1024px) and (min-height: 700px) {
+        :global(body:has(.archive)) {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        }
+
+        :global(body:has(.archive) > main) {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        }
+
+        .archive {
+        flex: 1;
+        min-height: 0;
+        padding-bottom: 24px;
+        }
+
+        .archive .bento {
+        flex: 1;
+        min-height: 0;
+        grid-template-rows: repeat(6, minmax(0, 1fr));
+        grid-auto-rows: minmax(0, 1fr);
+        }
+    }
+
+    .tile {
+        position: relative;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    /* Cover fills the tile; extra bottom space keeps the title clear of the meta line */
+    .tile :global(.cover) {
+        container-type: size;
+        height: 100%;
+        padding: 20px 20px 44px;
+        gap: 6cqmin;
+    }
+
+    /* Text sizes follow the tile's width AND height, so short tiles don't overflow */
+    .tile :global(.cover__title) {
+        font-size: clamp(22px, min(11cqw, 22cqh), 120px);
+    }
+
+    .tile :global(.cover__label) {
+        font-size: clamp(11px, min(3cqw, 7cqh), 24px);
+    }
+
+    .tile__badge {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        padding: 6px 10px;
+        background: var(--brand);
+        color: var(--bg);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .tile__meta {
+        position: absolute;
+        left: 20px;
+        bottom: 16px;
+        margin: 0;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .tile__dot { color: var(--accent); }
+
+    /* Whole tile is clickable */
+    .tile__link {
+        position: absolute;
+        inset: 0;
+    }
+
+    .tile__link:focus-visible {
+        outline: 1px solid var(--accent);
+        outline-offset: 4px;
+    }
+
+    /* Hover: border lightens, title glows */
+    .tile :global(.cover__title) {
+        transition: text-shadow 300ms ease, transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .tile:hover :global(.cover) {
+        border-color: var(--border-strong);
+    }
+
+    .tile:hover :global(.cover__title) {
+        text-shadow: 0 0 24px rgb(215 200 187 / 0.45);
+        transform: scale(1.03);
+    }
+
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+
+    /* Tablet and phone: 2 columns, scrolls normally */
+    @media (max-width: 1023px) {
+        .bento {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-auto-rows: 160px;
+        gap: 12px;
+        }
+
+        .tile--featured { grid-column: span 2; grid-row: span 2; }
+        .tile--tall     { grid-column: span 1; grid-row: span 2; }
+        .tile--wide     { grid-column: span 2; grid-row: span 1; }
+        .tile--small    { grid-column: span 1; grid-row: span 1; }
+
+        .tile__badge { top: 14px; left: 14px; }
+        .tile__meta  { left: 14px; bottom: 12px; }
+
+        /* Narrow tiles: keep the dot, hide the status word */
+        .tile--small .tile__status,
+        .tile--tall .tile__status {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .tile:hover :global(.cover__title) { transform: none; }
+    }
+</style>

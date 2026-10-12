@@ -1,0 +1,147 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProjectCover from '../../features/project-page/ProjectCover.astro';
+import { getWall } from '../../lib/projects';
+
+const { archive } = await getWall();
+const count = `${archive.length} ${archive.length === 1 ? 'project' : 'projects'}`;
+---
+
+<BaseLayout title="Archive — Bruce Travis">
+    <section class="gallery">
+        <header class="gallery__head">
+            <a class="link gallery__back" href="/work"><span class="arrow" aria-hidden="true">←</span> Work</a>
+            <div class="gallery__row">
+                <h1 class="gallery__title">Archive</h1>
+                <p class="gallery__count">{count}</p>
+            </div>
+        </header>
+
+        {archive.length === 0 ? (
+            <p class="gallery__empty">Nothing in the archive yet. Every project is on the <a class="link" href="/work">wall</a>.</p>
+            ) : (
+            <ul class="gallery__grid">
+                {archive.map((p) => (
+                    <li class="piece">
+                        <ProjectCover title={p.data.title} label={p.data.label} as="h2" />
+                        <p class="piece__meta">
+                            {p.data.date.getFullYear()} · <span class="piece__dot" aria-hidden="true">●</span> {p.data.status}
+                        </p>
+                        <a class="piece__link" href={`/work/${p.id}`}>
+                            <span class="sr-only">Read the build: {p.data.title} {p.data.label}</span>
+                        </a>
+                    </li>
+                ))}
+            </ul>
+        )}
+    </section>
+</BaseLayout>
+
+<style>
+    .gallery {
+        padding: 32px clamp(16px, 4vw, 64px) clamp(64px, 10vw, 144px);
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+    }
+
+    .gallery__head {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .gallery__back,
+    .gallery__count,
+    .piece__meta {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .gallery__back { align-self: flex-start; }
+
+    .gallery__row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 24px;
+    }
+
+    .gallery__title {
+        margin: 0;
+        font-size: clamp(56px, 6vw, 88px);
+        line-height: 0.9;
+        letter-spacing: -0.02em;
+        color: var(--brand);
+    }
+
+    .gallery__count { margin: 0; color: var(--muted); }
+
+    .gallery__empty { margin: 0; font-size: 18px; color: var(--muted); }
+
+    /* Gallery wall: 4 across on desktop, 3 on tablet, 2 on phone */
+    .gallery__grid {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 32px 16px;
+    }
+
+    .piece {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .piece__meta { margin: 0; color: var(--muted); }
+    .piece__dot { color: var(--accent); }
+
+    /* Whole piece is clickable */
+    .piece__link {
+        position: absolute;
+        inset: 0;
+    }
+
+    .piece__link:focus-visible {
+        outline: 1px solid var(--accent);
+        outline-offset: 6px;
+    }
+
+    .piece :global(.cover__title) {
+        transition: text-shadow 300ms ease, transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .piece:hover :global(.cover) { border-color: var(--border-strong); }
+
+    .piece:hover :global(.cover__title) {
+        text-shadow: 0 0 24px rgb(215 200 187 / 0.45);
+        transform: scale(1.03);
+    }
+
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+
+    @media (max-width: 1023px) {
+        .gallery__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 639px) {
+        .gallery__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 12px; }
+        .piece__meta { font-size: 11px; letter-spacing: 0.04em; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .piece:hover :global(.cover__title) { transform: none; }
+    }
+</style>

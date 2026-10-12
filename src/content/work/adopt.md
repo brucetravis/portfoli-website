@@ -1,13 +1,13 @@
 ---
 title: A.D.O.P.T.
 summary: "[One line: the problem it solves, for who.]"
-year: 2026
-role: "[Founder & engineer]"
+date: 2026-01-15
+role: Engineer
 status: In development
 stack: [React, Node.js, MongoDB, Firebase]
-cover: ../../assets/images/adopt-cover.jpg
-size: featured
-order: 1
+links:
+  code: https://github.com/neurora-innovations
+pinned: true
 ---
 
 ## The problem
