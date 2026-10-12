@@ -1,0 +1,330 @@
+---
+import { getCollection, render } from 'astro:content';
+import { Image } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProjectCover from '../../features/project-page/ProjectCover.astro';
+
+export async function getStaticPaths() {
+  const projects = (await getCollection('work', ({ data }) => !data.draft))
+    .sort((a, b) => a.data.order - b.data.order);
+
+  return projects.map((project, i) => ({
+    params: { slug: project.id },
+    props: { project, next: projects[(i + 1) % projects.length] },
+  }));
+}
+
+const { project, next } = Astro.props;
+const { title, summary, year, role, status, stack, cover, label, links } = project.data;
+const { Content, headings } = await render(project);
+const sections = headings.filter((h) => h.depth === 2);
+const hasNext = next.id !== project.id;
+---
+
+<BaseLayout title={`${title} — Bruce Travis`}>
+    <article class="project">
+        <header class="project__head">
+            <a class="link project__back" href="/work"><span class="arrow" aria-hidden="true">←</span> All work</a>
+            <p class="project__eyebrow">
+                Case study · <span class="project__dot" data-status={status} aria-hidden="true">●</span> {status}
+            </p>
+            <h1 class="project__title">{title}</h1>
+            <p class="project__summary">{summary}</p>
+        </header>
+
+        <dl class="project__meta">
+            <div><dt>Year</dt><dd>{year}</dd></div>
+            <div><dt>Role</dt><dd>{role}</dd></div>
+            <div><dt>Stack</dt><dd>{stack.join(' · ')}</dd></div>
+            {label && <div><dt>Platform</dt><dd>{label}</dd></div>}
+            {(links?.live || links?.code) && (
+                <div>
+                <dt>Links</dt>
+                <dd class="project__links">
+                    {links.live && <a class="link" href={links.live} target="_blank" rel="noopener">Live ↗</a>}
+                    {links.code && <a class="link" href={links.code} target="_blank" rel="noopener">Code ↗</a>}
+                </dd>
+                </div>
+            )}
+        </dl>
+
+        <div class="project__cover">
+            {cover ? (
+                <Image src={cover} alt="" widths={[640, 1024, 1600]} sizes="100vw" loading="eager" />
+            ) : (
+                <ProjectCover title={title} label={label} ratio="16 / 9" />
+            )}
+        </div>
+
+        <div class="project__body">
+            {sections.length > 1 && (
+                <nav class="toc" aria-label="On this page">
+                <span class="toc__label">On this page</span>
+                <ol class="toc__list">
+                    {sections.map((h, i) => (
+                    <li>
+                        <a class="toc__link" href={`#${h.slug}`}>
+                        <span class="toc__num">{String(i + 1).padStart(2, '0')}</span>
+                        {h.text}
+                        </a>
+                    </li>
+                    ))}
+                </ol>
+                </nav>
+            )}
+
+            <div class="prose">
+                <Content />
+            </div>
+        </div>
+
+        {hasNext && (
+            <a class="project__next" href={`/work/${next.id}`}>
+                <span class="project__next-label">Next project</span>
+                <span class="project__next-title">{next.data.title}</span>
+                <span class="arrow" aria-hidden="true">→</span>
+            </a>
+        )}
+    </article>
+</BaseLayout>
+
+<style>
+    .project {
+        padding: clamp(48px, 8vw, 120px) clamp(16px, 4vw, 64px) clamp(64px, 10vw, 144px);
+        display: flex;
+        flex-direction: column;
+        gap: clamp(40px, 6vw, 72px);
+    }
+
+    .project__head {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        max-width: 900px;
+    }
+
+    .project__back,
+    .project__eyebrow,
+    .project__meta dt,
+    .project__next-label {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .project__back {
+        align-self: flex-start;
+    }
+
+    .project__eyebrow {
+        margin: 0;
+        color: var(--muted);
+    }
+
+    .project__dot { color: var(--accent); }
+    .project__dot[data-status='Live'] { color: #6FBF73; }
+    .project__dot[data-status='Archived'] { color: var(--muted); }
+
+    .project__title {
+        margin: 0;
+        font-size: clamp(56px, 9vw, 144px);
+        line-height: 0.92;
+        letter-spacing: -0.02em;
+        color: var(--brand);
+    }
+
+    .project__summary {
+        margin: 0;
+        font-size: clamp(19px, 2vw, 24px);
+        line-height: 1.5;
+        max-width: 640px;
+    }
+
+    .project__meta {
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 24px;
+        padding: 24px 0;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .project__meta div {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .project__meta dt { color: var(--muted); }
+    .project__meta dd { margin: 0; font-size: 16px; }
+    .project__links { display: flex; gap: 16px; }
+
+    .project__cover :global(img) {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid var(--border);
+    }
+
+    /* Layout: sticky menu on the left, content on the right */
+    .project__body {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 680px);
+        justify-content: center;
+        gap: clamp(48px, 8vw, 120px);
+    }
+
+    .toc {
+        position: sticky;
+        top: 120px;
+        align-self: start;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .toc__label {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .toc__list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .toc__link {
+        display: flex;
+        gap: 12px;
+        font-size: 15px;
+        color: var(--muted);
+        text-decoration: none;
+        transition: color 200ms ease;
+    }
+
+    .toc__num {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        padding-top: 2px;
+    }
+
+    .toc__link:hover,
+    .toc__link.is-active {
+        color: var(--accent);
+    }
+
+    /* Styles for the Markdown content (it is not scoped, so :global) */
+    .prose {
+        min-width: 0;
+    }
+
+    .prose :global(h2) {
+        margin: 64px 0 16px;
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: clamp(32px, 4vw, 44px);
+        line-height: 1.1;
+        color: var(--brand);
+        scroll-margin-top: 120px;
+    }
+
+    .prose :global(h2:first-child) { margin-top: 0; }
+
+    .prose :global(p),
+    .prose :global(li) {
+        font-size: 18px;
+        line-height: 1.7;
+    }
+
+    .prose :global(a) {
+        color: var(--brand);
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+        text-underline-offset: 4px;
+    }
+
+    .prose :global(img) {
+        max-width: 100%;
+        height: auto;
+        border: 1px solid var(--border);
+    }
+
+    .project__next {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: end;
+        gap: 8px 24px;
+        padding-top: 32px;
+        border-top: 1px solid var(--border);
+        color: var(--brand);
+        text-decoration: none;
+    }
+
+    .project__next-label {
+        grid-column: 1 / -1;
+        color: var(--muted);
+    }
+
+    .project__next-title {
+        font-family: var(--font-display);
+        font-size: clamp(40px, 6vw, 96px);
+        line-height: 1;
+        transition: color 300ms ease;
+    }
+
+    .project__next .arrow {
+        font-size: clamp(32px, 4vw, 56px);
+        transition: transform 300ms ease, color 300ms ease;
+    }
+
+    .project__next:hover .project__next-title,
+    .project__next:hover .arrow {
+        color: var(--accent);
+    }
+
+    .project__next:hover .arrow { transform: translateX(8px); }
+
+    @media (max-width: 1023px) {
+        .project__body { grid-template-columns: minmax(0, 680px); }
+        .toc { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .project__next:hover .arrow { transform: none; }
+    }
+</style>
+
+<script>
+    const links = document.querySelectorAll<HTMLAnchorElement>('.toc__link');
+
+    if (links.length) {
+        const byId = new Map(
+        [...links].map((link) => [decodeURIComponent(link.hash.slice(1)), link])
+        );
+
+        const observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            links.forEach((l) => l.classList.remove('is-active'));
+            byId.get(entry.target.id)?.classList.add('is-active');
+            });
+        },
+        { rootMargin: '0px 0px -70% 0px' }
+        );
+
+        byId.forEach((_, id) => {
+        const heading = document.getElementById(id);
+        if (heading) observer.observe(heading);
+        });
+    }
+</script>
