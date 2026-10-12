@@ -13,6 +13,7 @@
     --font-display: 'Instrument Serif', Georgia, serif;
     --font-body: 'Hanken Grotesk', system-ui, sans-serif;
     --font-mono: 'IBM Plex Mono', monospace;
+    color-scheme: dark;
 }
 
 body {
@@ -43,3 +44,14 @@ h1 {
 .link:hover .arrow,
 .link:focus-visible .arrow { transform: translateX(4px); }
 .link:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+
+/* Thin, on-brand scrollbar */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) var(--bg);
+}
+
+html:hover {
+  scrollbar-color: var(--muted) var(--bg);
+}
