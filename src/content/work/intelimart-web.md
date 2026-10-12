@@ -1,13 +1,11 @@
 ---
 title: Intelimart
 summary: "[One line: the problem it solves, for who.]"
-year: 2026
-role: "Solo Engineer"
+date: 2026-03-01
+role: Engineer
 status: In development
 label: WEB
 stack: [React, Node.js]
-size: wide
-order: 2
 ---
 
 ## The problem

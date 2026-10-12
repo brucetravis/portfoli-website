@@ -5,23 +5,23 @@ import { z } from 'astro/zod';
 const work = defineCollection({
     loader: glob({ pattern: '**/*.md', base: './src/content/work' }),
     schema: ({ image }) =>
-        z.object({
+    z.object({
         title: z.string(),
         summary: z.string(),
-        year: z.number(),
+        date: z.coerce.date(),
         role: z.string(),
         status: z.enum(['Live', 'In development', 'Archived']),
         stack: z.array(z.string()),
         links: z
-            .object({
-                live: z.string().url().optional(),
-                code: z.string().url().optional(),
-            })
-            .optional(),
+        .object({
+            live: z.string().url().optional(),
+            code: z.string().url().optional(),
+        })
+        .optional(),
         cover: image().optional(),
         label: z.string().optional(),
-        size: z.enum(['featured', 'tall', 'wide', 'small']).default('small'),
-        order: z.number().default(0),
+        platform: z.enum(['web', 'app', 'other']).default('web'),
+        pinned: z.boolean().default(false),
         draft: z.boolean().default(false),
     }),
 });
