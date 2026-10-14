@@ -3,8 +3,12 @@ import { getCollection } from 'astro:content';
 import ProjectCover from '../project-page/ProjectCover.astro';
 
 const projects = (await getCollection('work', ({ data }) => !data.draft))
-  .sort((a, b) => a.data.order - b.data.order)
-  .slice(0, 3);
+    .sort((a, b) => {
+        // Pinned projects first, then newest by date
+        if (a.data.pinned !== b.data.pinned) return a.data.pinned ? -1 : 1;
+        return b.data.date.getTime() - a.data.date.getTime();
+    })
+    .slice(0, 3);
 ---
 
 <section class="work" aria-labelledby="work-title">
@@ -15,13 +19,13 @@ const projects = (await getCollection('work', ({ data }) => !data.draft))
 
     <ul class="work__list">
         {projects.map((p) => (
-        <li class="card">
-            <ProjectCover title={p.data.title} label={p.data.label} as="h3" />
-            <p class="card__meta">{p.data.year} · {p.data.role}</p>
-            <a class="link card__cta" href={`/work/${p.id}`} aria-label={`Read the build: ${p.data.title}`}>
-            Read the build <span class="arrow" aria-hidden="true">→</span>
-            </a>
-        </li>
+            <li class="card">
+                <ProjectCover title={p.data.title} label={p.data.label} as="h3" />
+                <p class="card__meta">{p.data.date.getFullYear()} · {p.data.role}</p>
+                <a class="link card__cta" href={`/work/${p.id}`} aria-label={`Read the build: ${p.data.title}`}>
+                    Read the build <span class="arrow" aria-hidden="true">→</span>
+                </a>
+            </li>
         ))}
     </ul>
 </section>
@@ -107,18 +111,19 @@ const projects = (await getCollection('work', ({ data }) => !data.draft))
 
     @media (max-width: 767px) {
         .work__list {
-        grid-template-columns: 1fr;
-        gap: 40px;
+            grid-template-columns: 1fr;
+            gap: 40px;
         }
 
-        .card :global(.cover) {
-        aspect-ratio: 4 / 3;
+        .work__list .card :global(.cover) {
+            aspect-ratio: 4 / 3;
+            height: auto;
         }
     }
 
     @media (prefers-reduced-motion: reduce) {
         .card:hover .card__cta .arrow {
-        transform: none;
+            transform: none;
         }
     }
 </style>

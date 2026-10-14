@@ -108,9 +108,22 @@ const share = {
 
     <section class="subscribe" aria-labelledby="subscribe-title">
       <h2 id="subscribe-title" class="subscribe__title">Get the next essay by email</h2>
-      <form class="subscribe__form">
-        <label for="essay-email" class="subscribe__label">Email address</label>
-        <input id="essay-email" type="email" name="email" placeholder="you@example.com" autocomplete="email" required />
+      <form data-subscribe class="subscribe__form">
+        <label 
+          for="essay-email" 
+          class="subscribe__label"
+        >
+          Email address
+        </label>
+
+        <input 
+          id="essay-email" 
+          type="email" 
+          name="email" 
+          placeholder="you@example.com" 
+          autocomplete="email" 
+          required 
+        />
         <button type="submit">Subscribe</button>
       </form>
     </section>

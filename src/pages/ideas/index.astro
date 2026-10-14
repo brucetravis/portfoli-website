@@ -90,7 +90,7 @@ const monthYear = (d: Date) => d.toLocaleDateString('en-GB', { month: 'long', ye
         <h2 id="subscribe-title" class="subscribe__title">Get new pieces by email</h2>
         <p class="subscribe__promise">{promise}</p>
       </div>
-      <form class="subscribe__form">
+      <form data-subscribe class="subscribe__form">
         <label for="ideas-email" class="sr-only">Email address</label>
         <input id="ideas-email" type="email" name="email" placeholder="you@example.com" autocomplete="email" required />
         <button type="submit">Subscribe</button>

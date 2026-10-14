@@ -1,0 +1,33 @@
+---
+// Wires every form marked data-subscribe to Buttondown + the toast.
+---
+<script>
+    const ENDPOINT = 'https://buttondown.com/api/emails/embed-subscribe/brucetravis';
+
+    document.querySelectorAll('form[data-subscribe]').forEach((el) => {
+        const form = el as HTMLFormElement;
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = form.querySelector('input[type="email"]') as HTMLInputElement;
+            const button = form.querySelector('button') as HTMLButtonElement;
+            const toast = (window as any).toast;
+
+            button.disabled = true;
+            try {
+                const res = await fetch(ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ email: input.value }),
+                });
+                
+                if (!res.ok) throw new Error('failed');
+                toast?.({ kind: 'success', title: 'Check your inbox', msg: 'Click the link to confirm and you’re in.' });
+                form.reset();
+            } catch {
+                toast?.({ kind: 'error', title: 'That didn’t go through', msg: 'Check the address and try again.' });
+            } finally {
+                button.disabled = false;
+            }
+        });
+    });
+</script>
