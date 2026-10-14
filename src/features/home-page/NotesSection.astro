@@ -8,7 +8,7 @@ const { action = '#' } = Astro.props;
         <p>[Promise line — what you send, and how often.]</p>
     </div>
 
-    <form class="notes__form" action={action} method="post">
+    <form data-subscribe class="notes__form" action={action} method="post">
         <label for="notes-email">Email address</label>
         <div class="notes__row">
             <input
@@ -25,9 +25,37 @@ const { action = '#' } = Astro.props;
     </form>
 </section>
 
+<script>
+    const form = document.querySelector('.notes__form') as HTMLFormElement | null;
+
+    form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const input = form.querySelector('input[type="email"]') as HTMLInputElement;
+        const button = form.querySelector('button') as HTMLButtonElement;
+        const toast = (window as any).toast;
+
+        button.disabled = true;
+        try {
+            const res = await fetch('https://buttondown.com/api/emails/embed-subscribe/brucetravis', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ email: input.value }),
+            });
+            if (!res.ok) throw new Error('failed');
+            toast?.({ kind: 'success', title: 'Check your inbox', msg: 'Click the link to confirm and you’re in.' });
+            form.reset();
+        } catch {
+            toast?.({ kind: 'error', title: 'That didn’t go through', msg: 'Check the address and try again.' });
+        } finally {
+            button.disabled = false;
+        }
+    });
+</script>
+
 <style>
     .notes {
-        padding: clamp(64px, 10vw, 144px) clamp(16px, 4vw, 64px);
+        padding: 20px;
+        /* padding: clamp(64px, 10vw, 144px) clamp(16px, 4vw, 64px); */
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
@@ -86,8 +114,20 @@ const { action = '#' } = Astro.props;
     .notes__small { margin: 0; font-size: 13px; color: var(--muted); }
 
     @media (max-width: 767px) {
-        .notes { flex-direction: column; align-items: stretch; gap: 32px; }
-        .notes__row { flex-direction: column; }
-        input { flex: none; }
+        .notes {
+            
+            flex-direction: column; 
+            align-items: stretch; 
+            gap: 32px; 
+        }
+
+        .notes__row { 
+            flex-direction: column; 
+        }
+
+        input {
+            flex: none;;
+            width: 100% 
+        }
     }
 </style>

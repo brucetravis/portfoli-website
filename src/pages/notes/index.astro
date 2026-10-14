@@ -29,7 +29,7 @@ const privacy = 'You’ll get one email to confirm. No spam, unsubscribe in one 
             </ol>
         </div>
 
-        <form class="signup">
+        <form data-subscribe class="signup">
             <h2 class="signup__title">Subscribe</h2>
             <label for="notes-email" class="eyebrow">Email address</label>
             <input id="notes-email" type="email" name="email" placeholder="you@example.com" autocomplete="email" required />
@@ -38,6 +38,33 @@ const privacy = 'You’ll get one email to confirm. No spam, unsubscribe in one 
         </form>
     </div>
 </BaseLayout>
+
+<script>
+    const form = document.querySelector('.signup') as HTMLFormElement | null;
+
+    form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const input = form.querySelector('input[type="email"]') as HTMLInputElement;
+        const button = form.querySelector('button') as HTMLButtonElement;
+        const toast = (window as any).toast;
+
+        button.disabled = true;
+        try {
+        const res = await fetch('https://buttondown.com/api/emails/embed-subscribe/brucetravis', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ email: input.value }),
+        });
+        if (!res.ok) throw new Error('failed');
+        toast?.({ kind: 'success', title: 'Check your inbox', msg: 'Click the link to confirm and you’re in.' });
+        form.reset();
+        } catch {
+            toast?.({ kind: 'error', title: 'That didn’t go through', msg: 'Check the address and try again.' });
+        } finally {
+            button.disabled = false;
+        }
+    });
+</script>
 
 <style>
     .notes {

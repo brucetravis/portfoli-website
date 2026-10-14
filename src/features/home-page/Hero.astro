@@ -2,6 +2,7 @@
 import HeroParticles from './components/HeroParticles.astro';
 import { Image } from 'astro:assets';
 import heroReference from '../../assets/images/hero-reference.jpg';
+import HeroGlass from './components/HeroGlass.astro';
 const { descriptor, line } = Astro.props;
 const name = 'Bruce Travis';
 const letters = name.split('');
@@ -36,6 +37,7 @@ const letters = name.split('');
       loading="eager"
       fetchpriority="high"
     />
+    <HeroGlass />
     <span class="hero__ref">Reference photo · not Bruce</span>
   </div>
 
