@@ -1,0 +1,223 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { SOCIALS } from '../../lib/site';
+
+// ---- Edit these (real copy comes later) ----
+const bookUrl = 'https://calendly.com/bruceambundo/work-meeting';
+const email = '[your@email]';
+const lead = '[Lead line — your value proposition for booking a call.]';
+
+const call = {
+    eyebrow: 'Book a call',
+    title: '[Call name]',
+    meta: '[25 min · Video · Free]',
+    points: [
+        '[Outcome 1 — what they walk away with]',
+        '[Outcome 2 — who it is for]',
+        '[Outcome 3 — your straight-answer promise]',
+    ],
+};
+
+const elsewhere = SOCIALS.filter((s) => s.label !== 'Email');
+// ---------------------------------------------
+---
+
+<BaseLayout title="Contact — Bruce Travis">
+    <section class="contact">
+        <header class="contact__intro">
+            <p class="eyebrow">Contact</p>
+            <h1 class="contact__title">Let's talk.</h1>
+            <p class="contact__lead">{lead}</p>
+        </header>
+
+        <div class="contact__grid">
+            <div class="book">
+                <p class="eyebrow book__eyebrow">{call.eyebrow}</p>
+                <h2 class="book__title">{call.title}</h2>
+                <p class="book__meta">{call.meta}</p>
+                <ul class="book__list">
+                    {call.points.map((p) => (
+                        <li><span class="book__dot" aria-hidden="true">—</span> {p}</li>
+                    ))}
+                </ul>
+                <a class="book__btn" href={bookUrl} target="_blank" rel="noopener">
+                    Book a slot <span class="arrow" aria-hidden="true">→</span>
+                </a>
+            </div>
+
+            <div class="direct">
+                <h2 class="eyebrow">Or reach me directly</h2>
+                <a class="direct__email" href={`mailto:${email}`}>
+                    {email} <span class="arrow" aria-hidden="true">→</span>
+                </a>
+                <ul class="direct__list">
+                <li>
+                    <span class="direct__key">Client work —</span>{' '}
+                    <a class="link" href="https://neurorainnovations.com" target="_blank" rel="noopener">through Neurora Innovations ↗</a>
+                </li>
+                <li>
+                    <span class="direct__key">Elsewhere —</span>{' '}
+                    {elsewhere.map((s, i) => (
+                        <>
+                            {i > 0 && ' · '}
+                            <a class="link" href={s.href} target="_blank" rel="noopener">{s.label}</a>
+                        </>
+                    ))}
+                </li>
+                    <li><span class="direct__key">Based in —</span> Nairobi, Kenya (GMT+3)</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</BaseLayout>
+
+<style>
+    .contact {
+        padding: clamp(32px, 6vw, 96px) clamp(16px, 4vw, 64px) clamp(64px, 10vw, 144px);
+        display: flex;
+        flex-direction: column;
+        gap: clamp(40px, 6vw, 64px);
+    }
+
+    .eyebrow {
+        margin: 0;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .contact__intro { display: flex; flex-direction: column; gap: 20px; }
+
+    .contact__title {
+        margin: 0;
+        font-size: clamp(56px, 8vw, 112px);
+        line-height: 0.95;
+        letter-spacing: -0.02em;
+        color: var(--brand);
+    }
+
+    .contact__lead {
+        margin: 0;
+        max-width: 620px;
+        font-size: clamp(18px, 1.8vw, 21px);
+        line-height: 1.6;
+    }
+
+    .contact__grid {
+        display: grid;
+        grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+        gap: clamp(32px, 5vw, 64px);
+        align-items: start;
+    }
+
+    /* Booking card */
+    .book {
+        padding: 40px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+    }
+
+    .book__eyebrow { color: var(--accent); margin-bottom: 14px; }
+
+    .book__title {
+        margin: 0 0 10px;
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: clamp(32px, 3.5vw, 40px);
+        line-height: 1.05;
+        color: var(--brand);
+    }
+
+    .book__meta {
+        margin: 0 0 24px;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .book__list {
+        list-style: none;
+        margin: 0 0 32px;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .book__list li { display: flex; gap: 12px; font-size: 15px; line-height: 1.5; }
+    .book__dot { color: var(--accent); flex-shrink: 0; }
+
+    .book__btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        height: 56px;
+        padding: 0 28px;
+        background: var(--brand);
+        color: var(--bg);
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background 200ms ease;
+    }
+
+    .book__btn:hover { background: var(--text); }
+    .book__btn .arrow { transition: transform 300ms ease; }
+    .book__btn:hover .arrow { transform: translateX(4px); }
+
+    /* Direct column */
+    .direct { display: flex; flex-direction: column; gap: 16px; }
+
+    .direct__email {
+        font-family: var(--font-display);
+        font-size: clamp(28px, 3vw, 34px);
+        line-height: 1.1;
+        color: var(--brand);
+        text-decoration: none;
+        transition: color 300ms ease;
+    }
+
+    .direct__email .arrow { display: inline-block; transition: transform 300ms ease; }
+    .direct__email:hover { color: var(--accent); }
+    .direct__email:hover .arrow { transform: translateX(6px); }
+
+    .direct__list {
+        list-style: none;
+        margin: 12px 0 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        font-size: 16px;
+        line-height: 1.6;
+    }
+
+    .direct__key { color: var(--muted); }
+
+    .link {
+        color: var(--brand);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        transition: color 150ms ease;
+    }
+    .link:hover { color: var(--accent); }
+
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+    @media (max-width: 1023px) {
+        .contact__grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 639px) {
+        .book { padding: 24px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .book__btn:hover .arrow,
+        .direct__email:hover .arrow { transform: none; }
+    }
+</style>
